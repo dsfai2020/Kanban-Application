@@ -16,7 +16,7 @@ import {
   useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, MoreHorizontal, Trash2, Edit2, ChevronUp, ChevronDown, GripVertical } from 'lucide-react'
+import { Plus, MoreHorizontal, Trash2, Edit2, ChevronUp, ChevronDown, GripVertical, Settings } from 'lucide-react'
 import type { Board } from '../types'
 
 interface SortableBoardItemProps {
@@ -171,6 +171,7 @@ interface SidebarProps {
   onRenameBoard: (boardId: string, newTitle: string, newDescription?: string) => void
   onDeleteBoard: (boardId: string) => void
   onReorderBoards: (boards: Board[]) => void
+  onOpenSettings: () => void
 }
 
 export default function Sidebar({ 
@@ -180,7 +181,8 @@ export default function Sidebar({
   onSelectBoard, 
   onRenameBoard,
   onDeleteBoard,
-  onReorderBoards
+  onReorderBoards,
+  onOpenSettings
 }: SidebarProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newBoardTitle, setNewBoardTitle] = useState('')
@@ -256,9 +258,30 @@ export default function Sidebar({
     setExpandedBoard(expandedBoard === boardId ? null : boardId)
   }
 
+  const handleToggleCollapse = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsCollapsed(!isCollapsed)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      setIsCollapsed(!isCollapsed)
+    }
+  }
+
   return (
     <aside className={`sidebar ${isCollapsed ? 'hidden' : ''}`}>
-      <div className="sidebar-toggle" onClick={() => setIsCollapsed(!isCollapsed)}>
+      <div 
+        className="sidebar-toggle" 
+        onClick={handleToggleCollapse}
+        onTouchEnd={handleToggleCollapse}
+        onKeyDown={handleKeyDown}
+        role="button"
+        tabIndex={0}
+        aria-label={isCollapsed ? 'Show boards' : 'Hide boards'}
+      >
         <span className="sidebar-toggle-text">
           {isCollapsed ? 'Show Boards' : 'Kanban Boards'}
         </span>
@@ -271,13 +294,22 @@ export default function Sidebar({
         <>
           <div className="sidebar-header">
             <h1 className="sidebar-title">Kanban Boards</h1>
-            <button
-              className="create-board-btn"
-              onClick={() => setIsCreating(true)}
-              title="Create new board"
-            >
-              <Plus size={18} />
-            </button>
+            <div className="sidebar-header-actions">
+              <button
+                className="settings-btn"
+                onClick={onOpenSettings}
+                title="Settings"
+              >
+                <Settings size={18} />
+              </button>
+              <button
+                className="create-board-btn"
+                onClick={() => setIsCreating(true)}
+                title="Create new board"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
 
       <DndContext

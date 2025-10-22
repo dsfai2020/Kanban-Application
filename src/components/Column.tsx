@@ -4,15 +4,16 @@ import { CSS } from '@dnd-kit/utilities'
 import { Plus, MoreHorizontal, Trash2, Edit2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 import Card from './Card'
-import type { Column as ColumnType, Card as CardType } from '../types'
+import type { Column as ColumnType, Card as CardType, AppSettings } from '../types'
 
 interface ColumnProps {
   column: ColumnType
+  settings: AppSettings
   onUpdateColumn: (column: ColumnType) => void
   onDeleteColumn: (columnId: string) => void
 }
 
-export default function Column({ column, onUpdateColumn, onDeleteColumn }: ColumnProps) {
+export default function Column({ column, settings, onUpdateColumn, onDeleteColumn }: ColumnProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(column.title)
   const [isCreatingCard, setIsCreatingCard] = useState(false)
@@ -165,7 +166,14 @@ export default function Column({ column, onUpdateColumn, onDeleteColumn }: Colum
         </div>
       </div>
 
-      <div className="cards-container">
+      <div 
+        className={`cards-container ${column.cards.length > settings.columnCardLimit ? 'scrollable' : ''}`}
+        style={{
+          maxHeight: column.cards.length > settings.columnCardLimit 
+            ? `${settings.columnCardLimit * 120 + 40}px` 
+            : 'none'
+        }}
+      >
         {column.cards.map((card) => (
           <Card
             key={card.id}

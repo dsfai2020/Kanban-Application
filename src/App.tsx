@@ -1,19 +1,28 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 import { v4 as uuidv4 } from 'uuid'
 import Sidebar from './components/Sidebar'
 import KanbanBoard from './components/KanbanBoard'
-import type { Board, AppState } from './types'
+import SettingsModal from './components/SettingsModal'
+import type { Board, AppState, AppSettings } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import './App.css'
 
 function App() {
+  const defaultSettings: AppSettings = {
+    columnCardLimit: 8,
+    theme: 'dark',
+    autoSave: true
+  }
+
   const defaultAppState: AppState = {
     boards: [],
-    activeBoard: null
+    activeBoard: null,
+    settings: defaultSettings
   }
 
   const [appState, setAppState] = useLocalStorage<AppState>('kanban-app-state', defaultAppState)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Initialize with a welcome board only if no boards exist
   useEffect(() => {
@@ -80,10 +89,26 @@ function App() {
 
       setAppState({
         boards: [welcomeBoard],
-        activeBoard: welcomeBoard.id
+        activeBoard: welcomeBoard.id,
+        settings: appState.settings || defaultSettings
       })
     }
   }, []) // Only run once on initial load
+
+  // Ensure settings exist in older saved states
+  useEffect(() => {
+    if (!appState.settings) {
+      setAppState((prev: AppState) => ({
+        ...prev,
+        settings: defaultSettings
+      }))
+    }
+  }, [appState.settings, setAppState])
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', appState.settings?.theme || 'dark')
+  }, [appState.settings?.theme])
 
   // Set the first board as active if none is selected
   useEffect(() => {
@@ -175,6 +200,13 @@ function App() {
     }))
   }
 
+  const handleUpdateSettings = (newSettings: AppSettings) => {
+    setAppState((prev: AppState) => ({
+      ...prev,
+      settings: newSettings
+    }))
+  }
+
   const handleUpdateBoard = (updatedBoard: Board) => {
     setAppState((prev: AppState) => ({
       ...prev,
@@ -200,12 +232,14 @@ function App() {
           onRenameBoard={handleRenameBoard}
           onDeleteBoard={handleDeleteBoard}
           onReorderBoards={handleReorderBoards}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
         <main className="main-content">
           {activeBoard ? (
             <KanbanBoard 
               board={activeBoard} 
               onUpdateBoard={handleUpdateBoard}
+              settings={appState.settings || defaultSettings}
             />
           ) : (
             <div className="empty-state">
@@ -215,6 +249,13 @@ function App() {
           )}
         </main>
       </DndContext>
+      
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        settings={appState.settings || defaultSettings}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={handleUpdateSettings}
+      />
     </div>
   )
 }

@@ -45,7 +45,14 @@ export interface Board {
   isActive: boolean;
 }
 
+export interface AppSettings {
+  columnCardLimit: number;
+  theme: 'dark' | 'light';
+  autoSave: boolean;
+}
+
 export interface AppState {
   boards: Board[];
   activeBoard: string | null;
+  settings: AppSettings;
 }

@@ -18,14 +18,15 @@ import {
 import { Plus } from 'lucide-react'
 import Column from './Column'
 import Card from './Card'
-import type { Board, Column as ColumnType, Card as CardType } from '../types'
+import type { Board, Column as ColumnType, Card as CardType, AppSettings } from '../types'
 
 interface KanbanBoardProps {
   board: Board
   onUpdateBoard: (board: Board) => void
+  settings: AppSettings
 }
 
-export default function KanbanBoard({ board, onUpdateBoard }: KanbanBoardProps) {
+export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBoardProps) {
   const [columns, setColumns] = useState(board.columns)
 
   // Sync columns with board changes when a different board is selected
@@ -201,6 +202,7 @@ export default function KanbanBoard({ board, onUpdateBoard }: KanbanBoardProps) 
               <Column 
                 key={column.id} 
                 column={column}
+                settings={settings}
                 onUpdateColumn={(updatedColumn: ColumnType) => {
                   updateColumns(columns.map(col => 
                     col.id === updatedColumn.id ? updatedColumn : col
