@@ -9,11 +9,19 @@ import './App.css'
 
 function App() {
   const defaultAppState: AppState = {
-    boards: [
-      {
+    boards: [],
+    activeBoard: null
+  }
+
+  const [appState, setAppState] = useLocalStorage<AppState>('kanban-app-state', defaultAppState)
+
+  // Initialize with a welcome board only if no boards exist
+  useEffect(() => {
+    if (appState.boards.length === 0) {
+      const welcomeBoard: Board = {
         id: uuidv4(),
-        title: 'My First Board',
-        description: 'Getting started with Kanban',
+        title: 'Welcome to Kanban',
+        description: 'Your first board - feel free to rename or delete it!',
         columns: [
           {
             id: uuidv4(),
@@ -23,15 +31,31 @@ function App() {
             cards: [
               {
                 id: uuidv4(),
-                title: 'Welcome to Kanban',
-                description: 'This is your first card!',
+                title: 'Welcome to your Kanban board! 🎉',
+                description: 'Click the menu (⋯) to edit this card and explore the features: priorities, tags, checklists, due dates, and more!',
                 columnId: '',
                 position: 0,
-                tags: ['welcome'],
+                tags: ['welcome', 'getting-started'],
                 priority: 'medium',
                 createdAt: new Date(),
                 updatedAt: new Date(),
-                checklist: []
+                checklist: [
+                  {
+                    id: 'check-1',
+                    text: 'Explore the card editing features',
+                    completed: false
+                  },
+                  {
+                    id: 'check-2',
+                    text: 'Create a new board',
+                    completed: false
+                  },
+                  {
+                    id: 'check-3',
+                    text: 'Try drag and drop between columns',
+                    completed: false
+                  }
+                ]
               }
             ]
           },
@@ -53,13 +77,15 @@ function App() {
         createdAt: new Date(),
         isActive: true
       }
-    ],
-    activeBoard: null
-  }
 
-  const [appState, setAppState] = useLocalStorage<AppState>('kanban-app-state', defaultAppState)
+      setAppState({
+        boards: [welcomeBoard],
+        activeBoard: welcomeBoard.id
+      })
+    }
+  }, []) // Only run once on initial load
 
-  // Set the first board as active on initial load
+  // Set the first board as active if none is selected
   useEffect(() => {
     if (appState.boards.length > 0 && !appState.activeBoard) {
       setAppState((prev: AppState) => ({
@@ -82,21 +108,21 @@ function App() {
           title: 'To Do',
           boardId: '',
           position: 0,
-          cards: []
+          cards: [] // New boards start with empty columns
         },
         {
           id: uuidv4(),
           title: 'In Progress',
           boardId: '',
           position: 1,
-          cards: []
+          cards: [] // New boards start with empty columns
         },
         {
           id: uuidv4(),
           title: 'Done',
           boardId: '',
           position: 2,
-          cards: []
+          cards: [] // New boards start with empty columns
         }
       ],
       createdAt: new Date(),
@@ -142,6 +168,13 @@ function App() {
     })
   }
 
+  const handleReorderBoards = (reorderedBoards: Board[]) => {
+    setAppState((prev: AppState) => ({
+      ...prev,
+      boards: reorderedBoards
+    }))
+  }
+
   const handleUpdateBoard = (updatedBoard: Board) => {
     setAppState((prev: AppState) => ({
       ...prev,
@@ -166,6 +199,7 @@ function App() {
           onSelectBoard={handleSelectBoard}
           onRenameBoard={handleRenameBoard}
           onDeleteBoard={handleDeleteBoard}
+          onReorderBoards={handleReorderBoards}
         />
         <main className="main-content">
           {activeBoard ? (

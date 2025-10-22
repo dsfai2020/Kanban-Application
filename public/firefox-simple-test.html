@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Simple Firefox Test</title>
+  </head>
+  <body>
+    <div id="root">
+      <h1>Testing Firefox Compatibility...</h1>
+    </div>
+    <script type="module">
+      import { createElement } from 'react'
+      import { createRoot } from 'react-dom/client'
+      
+      const TestComponent = () => {
+        return createElement('div', null, 
+          createElement('h1', null, 'Firefox + React Test'),
+          createElement('p', null, 'If you see this, React is working!'),
+          createElement('button', { 
+            onClick: () => alert('Click works!') 
+          }, 'Test Button')
+        )
+      }
+      
+      const root = createRoot(document.getElementById('root'))
+      root.render(createElement(TestComponent))
+    </script>
+  </body>
+</html>

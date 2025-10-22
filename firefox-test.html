@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Firefox Test</title>
+</head>
+<body>
+    <h1>Firefox Compatibility Test</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        const results = [];
+        
+        // Test 1: Basic JavaScript
+        try {
+            const test = 'Basic JS works';
+            results.push('✅ Basic JavaScript: OK');
+        } catch (e) {
+            results.push('❌ Basic JavaScript: ' + e.message);
+        }
+        
+        // Test 2: ES6 Features
+        try {
+            const arrow = () => 'Arrow functions work';
+            const [a, b] = [1, 2];
+            const obj = { a, b };
+            results.push('✅ ES6 Features: OK');
+        } catch (e) {
+            results.push('❌ ES6 Features: ' + e.message);
+        }
+        
+        // Test 3: Fetch API
+        try {
+            if (typeof fetch !== 'undefined') {
+                results.push('✅ Fetch API: Available');
+            } else {
+                results.push('❌ Fetch API: Not available');
+            }
+        } catch (e) {
+            results.push('❌ Fetch API: ' + e.message);
+        }
+        
+        // Test 4: WebSocket
+        try {
+            if (typeof WebSocket !== 'undefined') {
+                results.push('✅ WebSocket: Available');
+            } else {
+                results.push('❌ WebSocket: Not available');
+            }
+        } catch (e) {
+            results.push('❌ WebSocket: ' + e.message);
+        }
+        
+        // Test 5: Local Storage
+        try {
+            localStorage.setItem('test', 'value');
+            localStorage.removeItem('test');
+            results.push('✅ LocalStorage: OK');
+        } catch (e) {
+            results.push('❌ LocalStorage: ' + e.message);
+        }
+        
+        // Display results
+        document.getElementById('test-results').innerHTML = results.join('<br>');
+        
+        // Test loading the actual app
+        setTimeout(() => {
+            const iframe = document.createElement('iframe');
+            iframe.src = 'http://localhost:5174';
+            iframe.style.width = '100%';
+            iframe.style.height = '400px';
+            iframe.style.border = '1px solid #ccc';
+            iframe.style.marginTop = '20px';
+            
+            iframe.onload = () => {
+                results.push('✅ Kanban App: Loaded successfully');
+                document.getElementById('test-results').innerHTML = results.join('<br>');
+            };
+            
+            iframe.onerror = () => {
+                results.push('❌ Kanban App: Failed to load');
+                document.getElementById('test-results').innerHTML = results.join('<br>');
+            };
+            
+            document.body.appendChild(iframe);
+        }, 1000);
+    </script>
+</body>
+</html>

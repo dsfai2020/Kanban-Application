@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   DndContext, 
   DragOverlay, 
@@ -27,6 +27,11 @@ interface KanbanBoardProps {
 
 export default function KanbanBoard({ board, onUpdateBoard }: KanbanBoardProps) {
   const [columns, setColumns] = useState(board.columns)
+
+  // Sync columns with board changes when a different board is selected
+  useEffect(() => {
+    setColumns(board.columns)
+  }, [board.id, board.columns])
 
   // Sync columns with board changes and persist to parent
   const updateColumns = (newColumns: ColumnType[]) => {
