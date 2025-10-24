@@ -1315,6 +1315,35 @@ body {
   color: white;
 }
 
+/* Portal menu styling */
+.card-menu-portal .card-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.75rem;
+  min-height: 44px;
+}
+
+.card-menu-portal .card-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.card-menu-portal .card-menu-item.delete {
+  color: var(--danger);
+}
+
+.card-menu-portal .card-menu-item.delete:hover {
+  background: var(--danger);
+  color: white;
+}
+
 .edit-card-form {
   width: 100%;
 }

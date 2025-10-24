@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { 
@@ -24,6 +25,8 @@ interface CardProps {
 function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
   const [showModal, setShowModal] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
+  const menuButtonRef = useRef<HTMLButtonElement>(null)
 
   const {
     attributes,
@@ -53,6 +56,15 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
 
   const handleMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation()
+    
+    if (!showMenu && menuButtonRef.current) {
+      const rect = menuButtonRef.current.getBoundingClientRect()
+      setMenuPosition({
+        top: rect.bottom + window.scrollY,
+        left: rect.right - 120 + window.scrollX // 120px is menu width
+      })
+    }
+    
     setShowMenu(!showMenu)
   }
 
@@ -69,6 +81,20 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
   const completedTasks = card.checklist?.filter(item => item.completed).length || 0
   const totalTasks = card.checklist?.length || 0
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showMenu && menuButtonRef.current && !menuButtonRef.current.contains(event.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showMenu])
+
   return (
     <>
       <div
@@ -84,14 +110,28 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
             {onUpdate && onDelete && (
               <div className="card-actions">
                 <button
+                  ref={menuButtonRef}
                   className="card-menu-btn"
                   onClick={handleMenuClick}
                   title="Card options"
                 >
                   <MoreHorizontal size={14} />
                 </button>
-                {showMenu && (
-                  <div className="card-menu">
+                {showMenu && createPortal(
+                  <div 
+                    className="card-menu-portal"
+                    style={{
+                      position: 'fixed',
+                      top: menuPosition.top,
+                      left: menuPosition.left,
+                      zIndex: 9999,
+                      background: 'var(--bg-secondary)',
+                      border: '1px solid var(--border-color)',
+                      borderRadius: 'var(--radius-md)',
+                      boxShadow: 'var(--shadow-lg)',
+                      minWidth: '120px'
+                    }}
+                  >
                     <button
                       className="card-menu-item"
                       onClick={() => {
@@ -108,12 +148,14 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
                         if (window.confirm('Are you sure you want to delete this card?')) {
                           onDelete(card.id)
                         }
+                        setShowMenu(false)
                       }}
                     >
                       <Trash2 size={12} />
                       Delete
                     </button>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             )}
