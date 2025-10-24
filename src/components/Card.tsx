@@ -94,7 +94,11 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
   // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
-      if (showMenu && menuButtonRef.current && !menuButtonRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      const isMenuButton = menuButtonRef.current && menuButtonRef.current.contains(target)
+      const isMenuPortal = document.querySelector('.card-menu-portal')?.contains(target)
+      
+      if (showMenu && !isMenuButton && !isMenuPortal) {
         setShowMenu(false)
       }
     }
@@ -121,7 +125,7 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
         <div className="card-content">
           <div className="card-header">
             <h4 className="card-title">{card.title}</h4>
-            {onUpdate && onDelete && (
+            {onUpdate && onDelete ? (
               <div className="card-actions">
                 <button
                   ref={menuButtonRef}
@@ -177,6 +181,16 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
                   </div>,
                   document.body
                 )}
+              </div>
+            ) : (
+              <div className="card-actions">
+                <button
+                  className="card-menu-btn card-menu-btn-disabled"
+                  title="Editing not available"
+                  disabled
+                >
+                  <MoreHorizontal size={14} />
+                </button>
               </div>
             )}
           </div>

@@ -1284,6 +1284,16 @@ body {
   color: var(--text-primary);
 }
 
+.card-menu-btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.card-menu-btn-disabled:hover {
+  background: none !important;
+  color: var(--text-secondary) !important;
+}
+
 .card-menu {
   position: absolute;
   top: 100%;
