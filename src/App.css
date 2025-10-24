@@ -2037,7 +2037,25 @@ body {
 @media (max-width: 768px) {
   .card-modal {
     width: 95vw;
-    max-height: 95vh;
+    max-width: 95vw;
+    max-height: 90vh;
+    margin: 1rem auto;
+    overflow-y: auto;
+    /* Ensure modal is properly centered on mobile */
+    position: relative;
+    /* Add subtle border radius for mobile */
+    border-radius: var(--radius-lg);
+  }
+  
+  .modal-overlay {
+    /* Improve backdrop visibility on mobile */
+    background: rgba(0, 0, 0, 0.8);
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Ensure touch events work */
+    touch-action: manipulation;
   }
   
   .modal-header,
@@ -2046,12 +2064,110 @@ body {
     padding: 1rem;
   }
   
+  .modal-header {
+    /* Improve header for mobile */
+    padding: 1.25rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  .modal-header h2 {
+    font-size: 1.125rem;
+    margin: 0;
+  }
+  
+  .modal-close-btn {
+    /* Larger close button for mobile */
+    padding: 0.5rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+  }
+  
   .form-row {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .modal-actions {
     flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  
+  .modal-actions .btn {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 44px; /* Minimum touch target size */
+    touch-action: manipulation;
+    border-radius: var(--radius-md);
+  }
+  
+  /* Form inputs mobile optimization */
+  .form-input,
+  .form-textarea,
+  .form-select {
+    font-size: 16px; /* Prevent zoom on iOS */
+    min-height: 44px; /* Minimum touch target size */
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    touch-action: manipulation;
+  }
+  
+  .form-textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  /* Card menu button mobile optimization */
+  .card-menu-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.75rem;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    transition: var(--transition);
+    /* Improve tap target visibility */
+    opacity: 1 !important;
+  }
+  
+  .card-menu-btn:hover,
+  .card-menu-btn:focus {
+    background: var(--bg-hover);
+  }
+  
+  .card-menu-btn:active {
+    transform: scale(0.95);
+    background: var(--bg-hover);
+  }
+  
+  /* Card menu items mobile optimization */
+  .card-menu-portal .card-menu-item {
+    min-height: 48px; /* Slightly larger for mobile */
+    padding: 0.875rem 1rem;
+    font-size: 0.875rem;
+    touch-action: manipulation;
+    transition: all 0.2s ease;
+  }
+  
+  .card-menu-portal .card-menu-item:active {
+    transform: scale(0.98);
+    background: var(--bg-hover);
+  }
+  
+  /* Ensure menu portal is positioned correctly on mobile */
+  .card-menu-portal {
+    min-width: 140px !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
   }
 
   /* Auth Modal Mobile Styles */

@@ -54,14 +54,24 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
     })
   }
 
-  const handleMenuClick = (e: React.MouseEvent) => {
+  const handleMenuClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation()
+    e.preventDefault()
     
     if (!showMenu && menuButtonRef.current) {
       const rect = menuButtonRef.current.getBoundingClientRect()
+      const menuWidth = 120
+      let left = rect.right - menuWidth + window.scrollX
+      
+      // Ensure menu stays on screen (mobile viewport adjustment)
+      if (left < 0) left = 10
+      if (left + menuWidth > window.innerWidth) {
+        left = window.innerWidth - menuWidth - 10
+      }
+      
       setMenuPosition({
         top: rect.bottom + window.scrollY,
-        left: rect.right - 120 + window.scrollX // 120px is menu width
+        left: left
       })
     }
     
@@ -83,7 +93,7 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (showMenu && menuButtonRef.current && !menuButtonRef.current.contains(event.target as Node)) {
         setShowMenu(false)
       }
@@ -91,7 +101,11 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
 
     if (showMenu) {
       document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
+      document.addEventListener('touchstart', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+        document.removeEventListener('touchstart', handleClickOutside)
+      }
     }
   }, [showMenu])
 
@@ -113,7 +127,9 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
                   ref={menuButtonRef}
                   className="card-menu-btn"
                   onClick={handleMenuClick}
+                  onTouchStart={(e) => e.stopPropagation()}
                   title="Card options"
+                  style={{ touchAction: 'manipulation' }}
                 >
                   <MoreHorizontal size={14} />
                 </button>
@@ -138,6 +154,8 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
                         setShowModal(true)
                         setShowMenu(false)
                       }}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      style={{ touchAction: 'manipulation' }}
                     >
                       <Edit2 size={12} />
                       Edit
@@ -150,6 +168,8 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
                         }
                         setShowMenu(false)
                       }}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      style={{ touchAction: 'manipulation' }}
                     >
                       <Trash2 size={12} />
                       Delete
