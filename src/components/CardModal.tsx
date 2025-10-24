@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { 
   Plus,
   Check,
@@ -73,7 +74,7 @@ export default function CardModal({ card, onUpdate, onDelete, onClose }: CardMod
     setChecklist(checklist.filter(item => item.id !== itemId))
   }
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="card-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
@@ -230,6 +231,7 @@ export default function CardModal({ card, onUpdate, onDelete, onClose }: CardMod
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

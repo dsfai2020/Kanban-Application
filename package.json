@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:performance": "vitest run src/tests/performance.test.tsx",
+    "test:security": "vitest run src/tests/security.test.tsx",
     "monitor:performance": "node scripts/performance-monitor.mjs start"
   },
   "dependencies": {
@@ -30,7 +31,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^24.6.0",
+    "@types/node": "^24.9.1",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
     "@types/uuid": "^10.0.0",
