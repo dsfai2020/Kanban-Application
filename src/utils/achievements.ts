@@ -69,7 +69,7 @@ const BASE_ACHIEVEMENTS = [
   {
     id: 'speed_demon',
     type: 'speed_demon' as const,
-    name: 'Speed Demon',
+    name: 'Productivity Pro',
     description: 'Complete 5+ cards in one day',
     baseRequirement: 1,
     icon: 'trophy' as const

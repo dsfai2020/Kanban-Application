@@ -4,8 +4,12 @@ import type {
   UserProgress, 
   BadgeUnlock, 
   Achievement,
-  AchievementType
+  AchievementType,
+  BadgeTier
 } from '../types/achievements'
+
+// Notification callback type
+type NotificationCallback = (achievement: Achievement, tier: BadgeTier) => void
 
 const STORAGE_KEYS = {
   USER_STATS: 'kanban_user_stats',
@@ -52,6 +56,7 @@ class AchievementManager {
   private userStats: UserStats
   private userProgress: UserProgress
   private badgeUnlocks: BadgeUnlock[]
+  private notificationCallbacks: NotificationCallback[] = []
 
   constructor() {
     this.userStats = this.loadUserStats()
@@ -194,6 +199,11 @@ class AchievementManager {
     this.saveUserProgress()
     this.saveBadgeUnlocks()
     
+    // Trigger notifications for new unlocks
+    if (newUnlocks.length > 0) {
+      this.triggerNotifications(newUnlocks)
+    }
+    
     return newUnlocks
   }
 
@@ -272,6 +282,30 @@ class AchievementManager {
       achievement,
       status: this.getAchievementStatus(achievement)
     }))
+  }
+
+  // Notification system methods
+  addNotificationCallback(callback: NotificationCallback): void {
+    this.notificationCallbacks.push(callback)
+  }
+
+  removeNotificationCallback(callback: NotificationCallback): void {
+    this.notificationCallbacks = this.notificationCallbacks.filter(cb => cb !== callback)
+  }
+
+  private triggerNotifications(newUnlocks: BadgeUnlock[]): void {
+    newUnlocks.forEach(unlock => {
+      const achievement = ALL_ACHIEVEMENTS.find(a => a.id === unlock.achievementId)
+      if (achievement) {
+        this.notificationCallbacks.forEach(callback => {
+          try {
+            callback(achievement, unlock.tier)
+          } catch (error) {
+            console.error('Error in achievement notification callback:', error)
+          }
+        })
+      }
+    })
   }
 
   // Mark new unlocks as seen

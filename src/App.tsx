@@ -11,6 +11,7 @@ import ProfileModal from './components/ProfileModal'
 import type { Board, AppState, AppSettings } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { achievementManager } from './utils/achievementManager'
+import AchievementNotificationsContainer, { useAchievementNotifications } from './components/AchievementNotificationsContainer'
 import './App.css'
 
 function KanbanApp() {
@@ -33,6 +34,9 @@ function KanbanApp() {
   const [isSignInOpen, setIsSignInOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const lastThemeRef = useRef<string | null>(null)
+  
+  // Achievement notifications
+  const { notifications, showNotification, removeNotification } = useAchievementNotifications()
 
   // Sync user state with auth context
   useEffect(() => {
@@ -47,10 +51,16 @@ function KanbanApp() {
   // Initialize achievement tracking (daily login is automatically tracked)
   useEffect(() => {
     if (authState.isAuthenticated || authState.isGuest) {
-      // achievementManager is already initialized and tracking daily login
+      // Set up achievement notification callback
+      achievementManager.addNotificationCallback(showNotification)
       console.log('Achievement system initialized for user')
+      
+      // Cleanup callback on unmount or auth change
+      return () => {
+        achievementManager.removeNotificationCallback(showNotification)
+      }
     }
-  }, [authState.isAuthenticated, authState.isGuest])
+  }, [authState.isAuthenticated, authState.isGuest, showNotification])
 
   // Initialize with a welcome board only if no boards exist and user is authenticated or guest
   useEffect(() => {
@@ -345,6 +355,12 @@ function KanbanApp() {
       <ProfileModal
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
+      />
+
+      {/* Achievement Notifications */}
+      <AchievementNotificationsContainer
+        notifications={notifications}
+        onRemoveNotification={removeNotification}
       />
     </div>
   )

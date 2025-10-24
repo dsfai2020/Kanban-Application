@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Trophy, Award, Medal, Star, Crown } from 'lucide-react'
 import type { Achievement } from '../types/achievements'
 import { calculateProgress } from '../utils/achievements'
@@ -21,9 +21,49 @@ const ICON_MAP = {
 
 export default function Badge({ achievement, isUnlocked, currentProgress, showTooltip = true }: BadgeProps) {
   const [showDetails, setShowDetails] = useState(false)
+  const badgeRef = useRef<HTMLDivElement>(null)
   const IconComponent = ICON_MAP[achievement.icon]
   const progress = calculateProgress(currentProgress, achievement.requirement)
   const isComplete = progress >= 100
+
+  // Handle click outside to close tooltip
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (badgeRef.current && !badgeRef.current.contains(event.target as Node)) {
+        setShowDetails(false)
+      }
+    }
+
+    if (showDetails) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('touchstart', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
+  }, [showDetails])
+
+  const handleInteraction = () => {
+    if (showTooltip) {
+      setShowDetails(!showDetails)
+    }
+  }
+
+  const handleMouseEnter = () => {
+    if (showTooltip && !('ontouchstart' in window)) {
+      // Only show on hover for non-touch devices
+      setShowDetails(true)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (showTooltip && !('ontouchstart' in window)) {
+      // Only hide on hover leave for non-touch devices
+      setShowDetails(false)
+    }
+  }
 
   const getBadgeStyle = () => {
     if (isUnlocked || isComplete) {
@@ -58,13 +98,13 @@ export default function Badge({ achievement, isUnlocked, currentProgress, showTo
   }
 
   return (
-    <div className="badge-container">
+    <div className="badge-container" ref={badgeRef}>
       <div
         className={`badge ${isUnlocked || isComplete ? 'unlocked' : 'locked'}`}
         style={getBadgeStyle()}
-        onMouseEnter={() => showTooltip && setShowDetails(true)}
-        onMouseLeave={() => setShowDetails(false)}
-        onClick={() => setShowDetails(!showDetails)}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleInteraction}
       >
         <div className="badge-icon" style={getIconStyle()}>
           <IconComponent size={28} />
