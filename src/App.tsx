@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 import { v4 as uuidv4 } from 'uuid'
 import { AuthProvider } from './contexts/AuthContext'
@@ -31,6 +31,7 @@ function KanbanApp() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isSignInOpen, setIsSignInOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const lastThemeRef = useRef<string | null>(null)
 
   // Sync user state with auth context
   useEffect(() => {
@@ -40,11 +41,13 @@ function KanbanApp() {
         user: authState.user
       }))
     }
-  }, [authState.user]) // Remove setAppState from dependencies
+  }, [authState.user, appState.user]) // Add appState.user to prevent unnecessary updates
 
   // Initialize with a welcome board only if no boards exist and user is authenticated or guest
   useEffect(() => {
-    if ((authState.isAuthenticated || authState.isGuest) && appState.boards.length === 0) {
+    if ((authState.isAuthenticated || authState.isGuest) && 
+        appState.boards.length === 0 && 
+        !authState.isLoading) {
       const welcomeBoard: Board = {
         id: uuidv4(),
         title: authState.isGuest ? 'Welcome Guest!' : 'Welcome to Kanban',
@@ -114,7 +117,7 @@ function KanbanApp() {
         user: authState.user
       })
     }
-  }, [authState.isAuthenticated, authState.isGuest, appState.boards.length]) // Remove problematic dependencies
+  }, [authState.isAuthenticated, authState.isGuest, authState.isLoading, appState.boards.length, authState.user]) // Add missing dependencies
 
   // Apply theme to document
   useEffect(() => {
@@ -133,30 +136,38 @@ function KanbanApp() {
 
   // Sync profile preferences with app settings
   useEffect(() => {
-    if (authState.profile?.preferences && 
-        authState.profile.preferences.theme !== appState.settings?.theme) {
-      const profileSettings: AppSettings = {
-        columnCardLimit: appState.settings?.columnCardLimit || 8,
-        theme: authState.profile.preferences.theme,
-        autoSave: authState.profile.preferences.autoSave,
-      }
+    if (authState.profile?.preferences) {
+      const profileTheme = authState.profile.preferences.theme
+      const currentTheme = appState.settings?.theme
       
-      setAppState((prev: AppState) => ({
-        ...prev,
-        settings: profileSettings
-      }))
+      // Only update if theme actually changed and is different from last update
+      if (profileTheme !== currentTheme && profileTheme !== lastThemeRef.current) {
+        lastThemeRef.current = profileTheme
+        
+        const profileSettings: AppSettings = {
+          columnCardLimit: appState.settings?.columnCardLimit || 8,
+          theme: profileTheme,
+          autoSave: authState.profile.preferences.autoSave,
+        }
+        
+        setAppState((prev: AppState) => ({
+          ...prev,
+          settings: profileSettings
+        }))
+      }
     }
-  }, [authState.profile?.preferences]) // Remove circular dependencies
+  }, [authState.profile?.preferences?.theme, authState.profile?.preferences?.autoSave, appState.settings?.theme]) // Specific dependencies
 
   // Set the first board as active if none is selected
   useEffect(() => {
     if (appState.boards.length > 0 && !appState.activeBoard) {
+      const firstBoardId = appState.boards[0].id
       setAppState((prev: AppState) => ({
         ...prev,
-        activeBoard: prev.boards[0].id
+        activeBoard: firstBoardId
       }))
     }
-  }, [appState.boards.length, appState.activeBoard]) // Remove setAppState dependency
+  }, [appState.boards.length, appState.activeBoard]) // Keep specific dependencies
 
   const activeBoard = appState.boards.find((board: Board) => board.id === appState.activeBoard)
 

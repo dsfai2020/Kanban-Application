@@ -115,6 +115,14 @@ export default function SignInModal({ isOpen, onClose }: SignInModalProps) {
 
   if (!isOpen) return null
 
+  // Debug log for mobile testing
+  console.log('SignInModal render:', { 
+    isOpen, 
+    mode, 
+    showGuestButton: mode === 'signin' || mode === 'signup',
+    userAgent: navigator.userAgent.includes('Mobile')
+  })
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={e => e.stopPropagation()}>
@@ -298,8 +306,18 @@ export default function SignInModal({ isOpen, onClose }: SignInModalProps) {
                 type="button"
                 className="btn btn-secondary btn-full guest-btn"
                 onClick={handleContinueAsGuest}
+                style={{
+                  marginTop: '1rem',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  border: '2px solid var(--accent-primary)',
+                  color: 'var(--text-primary)',
+                  padding: '1rem',
+                  fontSize: '1rem',
+                  display: 'block',
+                  width: '100%'
+                }}
               >
-                Continue as Guest
+                🚀 Continue as Guest
               </button>
             )}
           </form>

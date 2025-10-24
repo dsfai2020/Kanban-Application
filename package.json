@@ -11,6 +11,7 @@
     "test": "vitest",
     "test:performance": "vitest run src/tests/performance.test.tsx",
     "test:security": "vitest run src/tests/security.test.tsx",
+    "test:mobile": "vitest run src/tests/mobile-performance.test.tsx",
     "monitor:performance": "node scripts/performance-monitor.mjs start"
   },
   "dependencies": {

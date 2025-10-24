@@ -151,6 +151,8 @@ body {
   overflow-y: auto;
   position: relative;
   box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
 }
 
 .auth-modal-header {
@@ -189,6 +191,9 @@ body {
 
 .auth-modal-content {
   padding: 0 1.5rem 1.5rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* Demo Notice */
@@ -535,6 +540,10 @@ body {
 .guest-btn {
   margin-top: 1rem;
   border: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  width: 100%;
+  padding: 0.75rem;
+  display: block;
 }
 
 .guest-btn:hover {
@@ -2043,6 +2052,73 @@ body {
   
   .modal-actions {
     flex-direction: column;
+  }
+
+  /* Auth Modal Mobile Styles */
+  .auth-modal {
+    width: 95vw;
+    max-width: 95vw;
+    max-height: 90vh;
+    margin: 1rem;
+    overflow-y: auto;
+  }
+
+  .auth-modal-header {
+    padding: 1rem 1rem 0;
+    margin-bottom: 1rem;
+    flex-shrink: 0;
+  }
+
+  .auth-modal-title {
+    font-size: 1.25rem;
+  }
+
+  .auth-modal-content {
+    padding: 0 1rem 1rem;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* Ensure auth form elements are properly sized */
+  .auth-form {
+    width: 100%;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-input,
+  .btn {
+    font-size: 16px; /* Prevent zoom on iOS */
+  }
+
+  /* Ensure guest button is visible and accessible on mobile */
+  .guest-btn {
+    margin-top: 1rem;
+    padding: 1rem;
+    font-size: 1rem;
+    border: 2px solid var(--border-color);
+    background: var(--bg-tertiary);
+    width: 100%;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 48px; /* Touch target size */
+  }
+
+  .guest-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
+  }
+
+  /* Auth footer mobile adjustments */
+  .auth-footer {
+    margin-top: 1.5rem;
+    text-align: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
   }
 }
 
