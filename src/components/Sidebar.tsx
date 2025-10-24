@@ -16,8 +16,8 @@ import {
   useSortable
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, MoreHorizontal, Trash2, Edit2, ChevronUp, ChevronDown, GripVertical, Settings } from 'lucide-react'
-import type { Board } from '../types'
+import { Plus, MoreHorizontal, Trash2, Edit2, ChevronUp, ChevronDown, GripVertical, Settings, User } from 'lucide-react'
+import type { Board, User as UserType } from '../types'
 
 interface SortableBoardItemProps {
   board: Board
@@ -172,6 +172,10 @@ interface SidebarProps {
   onDeleteBoard: (boardId: string) => void
   onReorderBoards: (boards: Board[]) => void
   onOpenSettings: () => void
+  onOpenProfile: () => void
+  onOpenSignIn: () => void
+  user: UserType | null
+  isGuest: boolean
 }
 
 export default function Sidebar({ 
@@ -179,10 +183,14 @@ export default function Sidebar({
   activeBoard, 
   onCreateBoard, 
   onSelectBoard, 
-  onRenameBoard,
-  onDeleteBoard,
+  onRenameBoard, 
+  onDeleteBoard, 
   onReorderBoards,
-  onOpenSettings
+  onOpenSettings,
+  onOpenProfile,
+  onOpenSignIn,
+  user,
+  isGuest
 }: SidebarProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [newBoardTitle, setNewBoardTitle] = useState('')
@@ -293,8 +301,28 @@ export default function Sidebar({
       {!isCollapsed && (
         <>
           <div className="sidebar-header">
-            <h1 className="sidebar-title">Kanban Boards</h1>
+            <h1 className="sidebar-title">
+              {isGuest ? 'Kanban (Guest)' : 'Kanban Boards'}
+            </h1>
             <div className="sidebar-header-actions">
+              {user && (
+                <button
+                  className="profile-btn"
+                  onClick={onOpenProfile}
+                  title={`Profile - ${user.displayName || user.email}`}
+                >
+                  <User size={18} />
+                </button>
+              )}
+              {isGuest && (
+                <button
+                  className="sign-in-btn"
+                  onClick={onOpenSignIn}
+                  title="Sign up to save your boards"
+                >
+                  <User size={18} />
+                </button>
+              )}
               <button
                 className="settings-btn"
                 onClick={onOpenSettings}
@@ -311,6 +339,20 @@ export default function Sidebar({
               </button>
             </div>
           </div>
+
+          {/* Guest Notice */}
+          {isGuest && (
+            <div className="guest-notice">
+              <h3>You're browsing as a guest</h3>
+              <p>Your boards are only saved locally and will be lost when you clear your browser data.</p>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={onOpenSignIn}
+              >
+                Sign Up to Save Permanently
+              </button>
+            </div>
+          )}
 
       <DndContext
         sensors={sensors}

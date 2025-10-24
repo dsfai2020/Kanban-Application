@@ -55,4 +55,48 @@ export interface AppState {
   boards: Board[];
   activeBoard: string | null;
   settings: AppSettings;
+  user?: User | null;
+}
+
+// Authentication types
+export interface User {
+  id: string;
+  email: string;
+  displayName?: string;
+  avatar?: string;
+  createdAt: Date;
+  lastLoginAt: Date;
+}
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  displayName: string;
+  avatar?: string;
+  bio?: string;
+  preferences: {
+    theme: 'dark' | 'light';
+    notifications: boolean;
+    autoSave: boolean;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AuthState {
+  user: User | null
+  profile: UserProfile | null
+  isLoading: boolean
+  isAuthenticated: boolean
+  isGuest: boolean
+}
+
+export interface SignInCredentials {
+  email: string;
+  password: string;
+}
+
+export interface SignUpCredentials extends SignInCredentials {
+  displayName: string;
+  confirmPassword: string;
 }

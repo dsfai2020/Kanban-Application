@@ -10,6 +10,7 @@ import {
   Tag, 
   Check
 } from 'lucide-react'
+import { memo } from 'react'
 import CardModal from './CardModal'
 import type { Card as CardType } from '../types'
 
@@ -20,7 +21,7 @@ interface CardProps {
   isDragging?: boolean
 }
 
-export default function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
+function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
   const [showModal, setShowModal] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
@@ -39,10 +40,15 @@ export default function Card({ card, onUpdate, onDelete, isDragging = false }: C
     }
   })
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging || isSortableDragging ? 0.5 : 1
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging || isSortableDragging ? 0.3 : 1,
+    willChange: isDragging || isSortableDragging ? 'transform' : 'auto',
+    ...(isDragging && {
+      pointerEvents: 'none' as const,
+      userSelect: 'none' as const
+    })
   }
 
   const handleMenuClick = (e: React.MouseEvent) => {
@@ -170,3 +176,5 @@ export default function Card({ card, onUpdate, onDelete, isDragging = false }: C
     </>
   )
 }
+
+export default memo(Card)

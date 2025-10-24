@@ -3,6 +3,7 @@ import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { Plus, MoreHorizontal, Trash2, Edit2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
+import { memo } from 'react'
 import Card from './Card'
 import type { Column as ColumnType, Card as CardType, AppSettings } from '../types'
 
@@ -13,7 +14,7 @@ interface ColumnProps {
   onDeleteColumn: (columnId: string) => void
 }
 
-export default function Column({ column, settings, onUpdateColumn, onDeleteColumn }: ColumnProps) {
+function Column({ column, settings, onUpdateColumn, onDeleteColumn }: ColumnProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(column.title)
   const [isCreatingCard, setIsCreatingCard] = useState(false)
@@ -238,3 +239,5 @@ export default function Column({ column, settings, onUpdateColumn, onDeleteColum
     </div>
   )
 }
+
+export default memo(Column)

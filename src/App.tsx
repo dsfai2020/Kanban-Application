@@ -1,14 +1,19 @@
 import { useEffect, useState } from 'react'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 import { v4 as uuidv4 } from 'uuid'
+import { AuthProvider } from './contexts/AuthContext'
+import { useAuth } from './contexts/AuthContext'
 import Sidebar from './components/Sidebar'
 import KanbanBoard from './components/KanbanBoard'
 import SettingsModal from './components/SettingsModal'
+import SignInModal from './components/SignInModal'
+import ProfileModal from './components/ProfileModal'
 import type { Board, AppState, AppSettings } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import './App.css'
 
-function App() {
+function KanbanApp() {
+  const { authState } = useAuth()
   const defaultSettings: AppSettings = {
     columnCardLimit: 8,
     theme: 'dark',
@@ -18,19 +23,34 @@ function App() {
   const defaultAppState: AppState = {
     boards: [],
     activeBoard: null,
-    settings: defaultSettings
+    settings: defaultSettings,
+    user: null
   }
 
   const [appState, setAppState] = useLocalStorage<AppState>('kanban-app-state', defaultAppState)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isSignInOpen, setIsSignInOpen] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
 
-  // Initialize with a welcome board only if no boards exist
+  // Sync user state with auth context
   useEffect(() => {
-    if (appState.boards.length === 0) {
+    if (authState.user !== appState.user) {
+      setAppState((prev: AppState) => ({
+        ...prev,
+        user: authState.user
+      }))
+    }
+  }, [authState.user]) // Remove setAppState from dependencies
+
+  // Initialize with a welcome board only if no boards exist and user is authenticated or guest
+  useEffect(() => {
+    if ((authState.isAuthenticated || authState.isGuest) && appState.boards.length === 0) {
       const welcomeBoard: Board = {
         id: uuidv4(),
-        title: 'Welcome to Kanban',
-        description: 'Your first board - feel free to rename or delete it!',
+        title: authState.isGuest ? 'Welcome Guest!' : 'Welcome to Kanban',
+        description: authState.isGuest 
+          ? 'You\'re using guest mode. Sign up to save your boards permanently!' 
+          : 'Your first board - feel free to rename or delete it!',
         columns: [
           {
             id: uuidv4(),
@@ -90,25 +110,43 @@ function App() {
       setAppState({
         boards: [welcomeBoard],
         activeBoard: welcomeBoard.id,
-        settings: appState.settings || defaultSettings
+        settings: appState.settings || defaultSettings,
+        user: authState.user
       })
     }
-  }, []) // Only run once on initial load
-
-  // Ensure settings exist in older saved states
-  useEffect(() => {
-    if (!appState.settings) {
-      setAppState((prev: AppState) => ({
-        ...prev,
-        settings: defaultSettings
-      }))
-    }
-  }, [appState.settings, setAppState])
+  }, [authState.isAuthenticated, authState.isGuest, appState.boards.length]) // Remove problematic dependencies
 
   // Apply theme to document
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', appState.settings?.theme || 'dark')
-  }, [appState.settings?.theme])
+    const theme = authState.profile?.preferences.theme || appState.settings?.theme || 'dark'
+    document.documentElement.setAttribute('data-theme', theme)
+  }, [authState.profile?.preferences.theme, appState.settings?.theme])
+
+  // Show sign in modal if not authenticated and not a guest
+  useEffect(() => {
+    if (!authState.isLoading && !authState.isAuthenticated && !authState.isGuest) {
+      setIsSignInOpen(true)
+    } else {
+      setIsSignInOpen(false)
+    }
+  }, [authState.isLoading, authState.isAuthenticated, authState.isGuest])
+
+  // Sync profile preferences with app settings
+  useEffect(() => {
+    if (authState.profile?.preferences && 
+        authState.profile.preferences.theme !== appState.settings?.theme) {
+      const profileSettings: AppSettings = {
+        columnCardLimit: appState.settings?.columnCardLimit || 8,
+        theme: authState.profile.preferences.theme,
+        autoSave: authState.profile.preferences.autoSave,
+      }
+      
+      setAppState((prev: AppState) => ({
+        ...prev,
+        settings: profileSettings
+      }))
+    }
+  }, [authState.profile?.preferences]) // Remove circular dependencies
 
   // Set the first board as active if none is selected
   useEffect(() => {
@@ -118,7 +156,7 @@ function App() {
         activeBoard: prev.boards[0].id
       }))
     }
-  }, [appState.boards, appState.activeBoard, setAppState])
+  }, [appState.boards.length, appState.activeBoard]) // Remove setAppState dependency
 
   const activeBoard = appState.boards.find((board: Board) => board.id === appState.activeBoard)
 
@@ -233,9 +271,24 @@ function App() {
           onDeleteBoard={handleDeleteBoard}
           onReorderBoards={handleReorderBoards}
           onOpenSettings={() => setIsSettingsOpen(true)}
+          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenSignIn={() => setIsSignInOpen(true)}
+          user={authState.user}
+          isGuest={authState.isGuest}
         />
         <main className="main-content">
-          {activeBoard ? (
+          {!authState.isAuthenticated && !authState.isGuest ? (
+            <div className="auth-required">
+              <h2>Welcome to Kanban</h2>
+              <p>Please sign in to access your boards and start organizing your tasks.</p>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setIsSignInOpen(true)}
+              >
+                Sign In
+              </button>
+            </div>
+          ) : activeBoard ? (
             <KanbanBoard 
               board={activeBoard} 
               onUpdateBoard={handleUpdateBoard}
@@ -256,7 +309,25 @@ function App() {
         onClose={() => setIsSettingsOpen(false)}
         onSave={handleUpdateSettings}
       />
+
+      <SignInModal
+        isOpen={isSignInOpen}
+        onClose={() => setIsSignInOpen(false)}
+      />
+
+      <ProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+      />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <KanbanApp />
+    </AuthProvider>
   )
 }
 

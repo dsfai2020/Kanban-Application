@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { 
   DndContext, 
   DragOverlay, 
@@ -29,20 +29,25 @@ interface KanbanBoardProps {
 
 export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBoardProps) {
   const [columns, setColumns] = useState(board.columns)
+  const lastUpdateRef = useRef<number>(0)
 
   // Sync columns with board changes when a different board is selected
   useEffect(() => {
     setColumns(board.columns)
   }, [board.id, board.columns])
 
-  // Sync columns with board changes and persist to parent
-  const updateColumns = (newColumns: ColumnType[]) => {
+  // Simple update function that only updates local state during drag
+  const updateColumnsImmediate = useCallback((newColumns: ColumnType[]) => {
     setColumns(newColumns)
+  }, [])
+
+  // Function to update parent - called only when drag completes
+  const updateParentBoard = useCallback((newColumns: ColumnType[]) => {
     onUpdateBoard({
       ...board,
       columns: newColumns
     })
-  }
+  }, [board, onUpdateBoard])
   const [activeCard, setActiveCard] = useState<CardType | null>(null)
   const [isCreatingColumn, setIsCreatingColumn] = useState(false)
   const [newColumnTitle, setNewColumnTitle] = useState('')
@@ -50,13 +55,13 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 4, // Balanced activation distance
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200,
-        tolerance: 6,
+        delay: 100, // Reasonable delay to prevent conflicts
+        tolerance: 3, // Good balance of precision and stability
       },
     })
   )
@@ -88,12 +93,20 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
 
     if (!activeColumn || !overColumn) return
 
+    // Only update if moving between different columns and enough time has passed
     if (activeColumn.id !== overColumn.id) {
+      const now = Date.now()
+      if (now - lastUpdateRef.current < 16) { // Limit to ~60fps
+        return
+      }
+      lastUpdateRef.current = now
+
       const activeCards = activeColumn.cards
       const overCards = overColumn.cards
       const overIndex = overCard ? overCards.findIndex(card => card.id === overId) : overCards.length
 
-      updateColumns(columns.map(column => {
+      // Use immediate update for cross-column drag feedback
+      updateColumnsImmediate(columns.map(column => {
         if (column.id === activeColumn.id) {
           return {
             ...column,
@@ -135,19 +148,28 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
 
     if (!activeColumn || !overColumn) return
 
+    // Only handle same-column reordering here (cross-column was handled in dragOver)
     if (activeColumn.id === overColumn.id) {
       const activeIndex = activeColumn.cards.findIndex(card => card.id === activeId)
       const overIndex = overCard ? activeColumn.cards.findIndex(card => card.id === overId) : activeColumn.cards.length
 
-      updateColumns(columns.map(column => {
-        if (column.id === activeColumn.id) {
-          return {
-            ...column,
-            cards: arrayMove(column.cards, activeIndex, overIndex)
+      if (activeIndex !== overIndex) {
+        const newColumns = columns.map(column => {
+          if (column.id === activeColumn.id) {
+            return {
+              ...column,
+              cards: arrayMove(column.cards, activeIndex, overIndex)
+            }
           }
-        }
-        return column
-      }))
+          return column
+        })
+        updateColumnsImmediate(newColumns)
+        // Update parent after drag completes
+        updateParentBoard(newColumns)
+      }
+    } else {
+      // For cross-column moves, just update the parent with current state
+      updateParentBoard(columns)
     }
   }
 
@@ -178,7 +200,9 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
         position: columns.length,
         cards: []
       }
-      updateColumns([...columns, newColumn])
+      const newColumns = [...columns, newColumn]
+      updateColumnsImmediate(newColumns)
+      updateParentBoard(newColumns)
       setNewColumnTitle('')
       setIsCreatingColumn(false)
     }
@@ -219,12 +243,16 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
                 column={column}
                 settings={settings}
                 onUpdateColumn={(updatedColumn: ColumnType) => {
-                  updateColumns(columns.map(col => 
+                  const newColumns = columns.map(col => 
                     col.id === updatedColumn.id ? updatedColumn : col
-                  ))
+                  )
+                  updateColumnsImmediate(newColumns)
+                  updateParentBoard(newColumns)
                 }}
                 onDeleteColumn={(columnId: string) => {
-                  updateColumns(columns.filter(col => col.id !== columnId))
+                  const newColumns = columns.filter(col => col.id !== columnId)
+                  updateColumnsImmediate(newColumns)
+                  updateParentBoard(newColumns)
                 }}
               />
             ))}
@@ -270,8 +298,29 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
           </div>
         </div>
 
-        <DragOverlay>
-          {activeCard ? <Card card={activeCard} isDragging /> : null}
+        <DragOverlay 
+          dropAnimation={null}
+          style={{
+            cursor: 'grabbing'
+          }}
+        >
+          {activeCard ? (
+            <div style={{
+              transform: 'rotate(5deg) scale(1.05)',
+              transformOrigin: 'center',
+              willChange: 'transform',
+              backfaceVisibility: 'hidden',
+              pointerEvents: 'none',
+              opacity: 0.95
+            }}>
+              <Card 
+                card={activeCard} 
+                isDragging 
+                onUpdate={() => {}} 
+                onDelete={() => {}}
+              />
+            </div>
+          ) : null}
         </DragOverlay>
       </DndContext>
     </div>
