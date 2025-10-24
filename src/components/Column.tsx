@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSortable } from '@dnd-kit/sortable'
+import { useSortable, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Plus, MoreHorizontal, Trash2, Edit2 } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
@@ -166,23 +166,28 @@ export default function Column({ column, settings, onUpdateColumn, onDeleteColum
         </div>
       </div>
 
-      <div 
-        className={`cards-container ${column.cards.length > settings.columnCardLimit ? 'scrollable' : ''}`}
-        style={{
-          maxHeight: column.cards.length > settings.columnCardLimit 
-            ? `${settings.columnCardLimit * 120 + 40}px` 
-            : 'none'
-        }}
+      <SortableContext 
+        items={column.cards.map(card => card.id)} 
+        strategy={verticalListSortingStrategy}
       >
-        {column.cards.map((card) => (
-          <Card
-            key={card.id}
-            card={card}
-            onUpdate={handleUpdateCard}
-            onDelete={handleDeleteCard}
-          />
-        ))}
-      </div>
+        <div 
+          className={`cards-container ${column.cards.length > settings.columnCardLimit ? 'scrollable' : ''}`}
+          style={{
+            maxHeight: column.cards.length > settings.columnCardLimit 
+              ? `${settings.columnCardLimit * 120 + 40}px` 
+              : 'none'
+          }}
+        >
+          {column.cards.map((card) => (
+            <Card
+              key={card.id}
+              card={card}
+              onUpdate={handleUpdateCard}
+              onDelete={handleDeleteCard}
+            />
+          ))}
+        </div>
+      </SortableContext>
 
       <div className="add-card-section">
         {isCreatingCard ? (

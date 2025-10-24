@@ -87,6 +87,32 @@ body {
   margin: 0;
   padding: 0;
   transition: background-color 0.3s ease, color 0.3s ease;
+  /* Improve touch scrolling */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* Prevent text selection during drag operations */
+.dnd-context-dragging * {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Improve touch target sizes */
+@media (pointer: coarse) {
+  .card {
+    min-height: 120px;
+    padding: 1rem;
+  }
+  
+  .card-menu-btn,
+  .column-menu-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0.75rem;
+  }
 }
 
 .app {
@@ -429,6 +455,8 @@ body {
   display: flex;
   flex-direction: column;
   transition: var(--transition);
+  touch-action: manipulation;
+  overscroll-behavior: contain;
 }
 
 .column:hover {
@@ -576,6 +604,9 @@ body {
   min-height: 0;
   /* Enable momentum scrolling on iOS */
   -webkit-overflow-scrolling: touch;
+  /* Prevent scroll during drag operations */
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
 }
 
 .cards-container.scrollable {
@@ -586,6 +617,19 @@ body {
   /* Custom scrollbar for better visual feedback */
   scrollbar-width: thin;
   scrollbar-color: var(--border-hover) var(--bg-secondary);
+  /* Better touch scrolling */
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Disable scrolling during active drag operations */
+.cards-container.scrollable[data-dragging="true"] {
+  overflow-y: hidden;
+  pointer-events: none;
+}
+
+.cards-container.scrollable[data-dragging="true"] .card {
+  pointer-events: auto;
 }
 
 .cards-container.scrollable::-webkit-scrollbar {
@@ -616,7 +660,11 @@ body {
   transition: var(--transition);
   position: relative;
   min-height: 80px;
-  touch-action: manipulation;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .card:hover {
@@ -634,6 +682,19 @@ body {
   opacity: 0.5;
   transform: rotate(5deg);
   box-shadow: var(--shadow-lg);
+  z-index: 1000;
+}
+
+/* Prevent scrolling when dragging */
+.card[aria-pressed="true"],
+.card:active {
+  touch-action: none;
+}
+
+/* Improve drag overlay appearance */
+.card[data-dnd-dragging="true"] {
+  opacity: 0.3;
+  transform: scale(0.95);
 }
 
 .card.editing {
@@ -1007,6 +1068,28 @@ body {
     overflow-x: hidden;
     padding: 0.5rem;
     min-height: 0; /* Important for flex child scrolling */
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+    overscroll-behavior: contain;
+  }
+
+  /* Improve mobile drag and drop */
+  .card {
+    touch-action: none;
+    min-height: 100px; /* Larger touch target */
+    padding: 1rem; /* More padding for easier touch */
+  }
+
+  .card:active,
+  .card[aria-pressed="true"] {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .column {
+    touch-action: manipulation;
+    min-width: 300px; /* Slightly wider for easier touch */
+    width: 300px;
   }
 
   .board-header {

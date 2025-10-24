@@ -7,6 +7,7 @@ import {
   type DragOverEvent,
   closestCorners,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors
 } from '@dnd-kit/core'
@@ -50,6 +51,12 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 6,
       },
     })
   )
@@ -192,6 +199,14 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        autoScroll={{
+          threshold: {
+            x: 0.2,
+            y: 0.2,
+          },
+          acceleration: 10,
+          interval: 5,
+        }}
       >
         <div className="columns-container">
           <SortableContext 
