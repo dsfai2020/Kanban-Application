@@ -5,6 +5,7 @@ import {
   Check,
   X
 } from 'lucide-react'
+import { achievementManager } from '../utils/achievementManager'
 import type { Card as CardType, ChecklistItem } from '../types'
 
 interface CardModalProps {
@@ -37,6 +38,14 @@ export default function CardModal({ card, onUpdate, onDelete, onClose }: CardMod
       checklist,
       updatedAt: new Date()
     }
+    
+    // Track card update achievement
+    try {
+      achievementManager.trackCardCompleted()
+    } catch (error) {
+      console.warn('Achievement tracking failed:', error)
+    }
+    
     onUpdate(updatedCard)
     onClose()
   }
@@ -65,9 +74,26 @@ export default function CardModal({ card, onUpdate, onDelete, onClose }: CardMod
   }
 
   const toggleChecklistItem = (itemId: string) => {
-    setChecklist(checklist.map(item => 
-      item.id === itemId ? { ...item, completed: !item.completed } : item
-    ))
+    const updatedChecklist = checklist.map(item => {
+      if (item.id === itemId) {
+        const wasCompleted = item.completed
+        const nowCompleted = !item.completed
+        
+        // Track checklist completion achievement
+        if (!wasCompleted && nowCompleted) {
+          try {
+            achievementManager.trackChecklistCompleted()
+          } catch (error) {
+            console.warn('Achievement tracking failed:', error)
+          }
+        }
+        
+        return { ...item, completed: nowCompleted }
+      }
+      return item
+    })
+    
+    setChecklist(updatedChecklist)
   }
 
   const removeChecklistItem = (itemId: string) => {

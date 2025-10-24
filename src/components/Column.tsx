@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { memo } from 'react'
 import Card from './Card'
 import type { Column as ColumnType, Card as CardType, AppSettings } from '../types'
+import { achievementManager } from '../utils/achievementManager'
 
 interface ColumnProps {
   column: ColumnType
@@ -68,6 +69,13 @@ function Column({ column, settings, onUpdateColumn, onDeleteColumn }: ColumnProp
         checklist: [],
         createdAt: new Date(),
         updatedAt: new Date()
+      }
+
+      // Track card creation achievement
+      try {
+        achievementManager.trackCardCreated()
+      } catch (error) {
+        console.warn('Achievement tracking failed:', error)
       }
 
       onUpdateColumn({

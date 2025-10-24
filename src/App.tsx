@@ -10,6 +10,7 @@ import SignInModal from './components/SignInModal'
 import ProfileModal from './components/ProfileModal'
 import type { Board, AppState, AppSettings } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
+import { achievementManager } from './utils/achievementManager'
 import './App.css'
 
 function KanbanApp() {
@@ -42,6 +43,14 @@ function KanbanApp() {
       }))
     }
   }, [authState.user, appState.user]) // Add appState.user to prevent unnecessary updates
+
+  // Initialize achievement tracking (daily login is automatically tracked)
+  useEffect(() => {
+    if (authState.isAuthenticated || authState.isGuest) {
+      // achievementManager is already initialized and tracking daily login
+      console.log('Achievement system initialized for user')
+    }
+  }, [authState.isAuthenticated, authState.isGuest])
 
   // Initialize with a welcome board only if no boards exist and user is authenticated or guest
   useEffect(() => {
@@ -201,6 +210,13 @@ function KanbanApp() {
       ],
       createdAt: new Date(),
       isActive: false
+    }
+
+    // Track board creation achievement
+    try {
+      achievementManager.trackBoardCreated()
+    } catch (error) {
+      console.warn('Achievement tracking failed:', error)
     }
 
     setAppState((prev: AppState) => ({

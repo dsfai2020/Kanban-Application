@@ -536,6 +536,78 @@ body {
   border-color: var(--border-hover);
 }
 
+/* Prominent Profile Section */
+.sidebar-profile-section {
+  margin-top: auto;
+  padding: 1rem 0.75rem 0.75rem 0.75rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.profile-button-prominent {
+  width: 100%;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  cursor: pointer;
+  padding: 0.875rem;
+  transition: all var(--transition);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+  margin-bottom: 0.5rem;
+}
+
+.profile-button-prominent:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--primary-color) 100%);
+}
+
+.profile-button-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  flex: 1;
+}
+
+.profile-name {
+  font-weight: 600;
+  font-size: 0.925rem;
+  line-height: 1.2;
+}
+
+.profile-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+.upgrade-button {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  transition: var(--transition);
+}
+
+.upgrade-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
+}
+
 /* Guest Mode Styles */
 .guest-btn {
   margin-top: 1rem;

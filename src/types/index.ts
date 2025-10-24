@@ -100,3 +100,6 @@ export interface SignUpCredentials extends SignInCredentials {
   displayName: string;
   confirmPassword: string;
 }
+
+// Re-export achievement types
+export * from './achievements'

@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react'
-import { User, Mail, Camera, Save, X, LogOut, Edit2 } from 'lucide-react'
+import { User, Mail, Camera, Save, X, LogOut, Edit2, Trophy } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { achievementManager } from '../utils/achievementManager'
+import Badge from './Badge'
 import type { UserProfile } from '../types'
+import './ProfileModal.css'
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -10,7 +13,7 @@ interface ProfileModalProps {
 
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { authState, updateProfile, signOut } = useAuth()
-  const { user, profile } = authState
+  const { user, profile, isGuest } = authState
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [isEditing, setIsEditing] = useState(false)
@@ -125,7 +128,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     }
   }
 
-  if (!isOpen || !user || !profile) return null
+  if (!isOpen) return null
 
   const getInitials = (name: string) => {
     return name
@@ -135,6 +138,106 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       .toUpperCase()
       .substring(0, 2)
   }
+
+  // Guest user display
+  if (isGuest) {
+    return (
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="profile-modal" onClick={e => e.stopPropagation()}>
+          <div className="profile-modal-header">
+            <h2 className="profile-modal-title">
+              <Trophy size={20} />
+              Guest Profile & Achievements
+            </h2>
+            <button
+              className="profile-modal-close"
+              onClick={onClose}
+              type="button"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="profile-modal-content">
+            {/* Guest Avatar Section */}
+            <div className="profile-avatar-section">
+              <div className="profile-avatar">
+                <div className="avatar-placeholder guest-avatar">
+                  <User size={32} />
+                </div>
+              </div>
+              <div className="profile-info-guest">
+                <h3>Guest User</h3>
+                <p>Your progress is saved locally</p>
+              </div>
+            </div>
+
+            {/* Guest Notice */}
+            <div className="guest-notice">
+              <h4>🌟 Sign up to unlock more features!</h4>
+              <p>Create an account to save your progress across devices and unlock exclusive achievements.</p>
+            </div>
+
+            {/* Achievement Stats Section */}
+            <div className="profile-section">
+              <h3 className="section-title">
+                <Trophy size={18} />
+                Your Achievement Stats
+              </h3>
+              <div className="achievement-stats">
+                <div className="stat-card">
+                  <div className="stat-icon">📋</div>
+                  <div className="stat-info">
+                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCompleted}</div>
+                    <div className="stat-label">Cards Completed</div>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">✨</div>
+                  <div className="stat-info">
+                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCreated}</div>
+                    <div className="stat-label">Cards Created</div>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">🔥</div>
+                  <div className="stat-info">
+                    <div className="stat-number">{achievementManager.getUserStats().currentDailyStreak}</div>
+                    <div className="stat-label">Current Streak</div>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">🏆</div>
+                  <div className="stat-info">
+                    <div className="stat-number">{achievementManager.getBadgeUnlocks().length}</div>
+                    <div className="stat-label">Badges Earned</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Badges Grid */}
+            <div className="profile-section">
+              <h3 className="section-title">Achievement Badges</h3>
+              <div className="badges-grid">
+                {achievementManager.getAllAchievementsWithStatus().map(({ achievement, status }) => (
+                  <Badge
+                    key={achievement.id}
+                    achievement={achievement}
+                    isUnlocked={status.isUnlocked}
+                    currentProgress={status.currentProgress}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Authenticated user display
+  if (!user || !profile) return null
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -284,6 +387,75 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                   />
                   <span className="checkbox-text">Auto-save changes</span>
                 </label>
+              </div>
+            </div>
+
+            {/* Achievements & Badges */}
+            <div className="form-section">
+              <h3 className="form-section-title">
+                <Trophy size={18} />
+                Achievements & Badges
+              </h3>
+              <div className="achievements-section">
+                <div className="achievements-stats">
+                  <div className="stat-card">
+                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCompleted}</div>
+                    <div className="stat-label">Cards Completed</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCreated}</div>
+                    <div className="stat-label">Cards Created</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number">{achievementManager.getUserStats().currentDailyStreak}</div>
+                    <div className="stat-label">Day Streak</div>
+                  </div>
+                  <div className="stat-card">
+                    <div className="stat-number">{achievementManager.getBadgeUnlocks().length}</div>
+                    <div className="stat-label">Badges Earned</div>
+                  </div>
+                </div>
+
+                <div className="badges-grid">
+                  {achievementManager.getAllAchievementsWithStatus().map(({ achievement, status }) => (
+                    <Badge
+                      key={achievement.id}
+                      achievement={achievement}
+                      isUnlocked={status.isUnlocked}
+                      currentProgress={status.currentProgress}
+                    />
+                  ))}
+                </div>
+
+                <div className="achievements-progress">
+                  <h4>Next Goals</h4>
+                  <div className="next-goals">
+                    {achievementManager.getAllAchievementsWithStatus()
+                      .filter(({ status }) => !status.isUnlocked && status.percentage > 0)
+                      .sort((a, b) => b.status.percentage - a.status.percentage)
+                      .slice(0, 3)
+                      .map(({ achievement, status }) => (
+                        <div key={achievement.id} className="goal-item">
+                          <div className="goal-info">
+                            <span className="goal-name">{achievement.name}</span>
+                            <span className="goal-progress">
+                              {status.currentProgress} / {achievement.requirement}
+                            </span>
+                          </div>
+                          <div className="goal-progress-bar">
+                            <div 
+                              className="progress-fill" 
+                              style={{ 
+                                width: `${status.percentage}%`,
+                                background: achievement.color
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -20,6 +20,7 @@ import { Plus } from 'lucide-react'
 import Column from './Column'
 import Card from './Card'
 import type { Board, Column as ColumnType, Card as CardType, AppSettings } from '../types'
+import { achievementManager } from '../utils/achievementManager'
 
 interface KanbanBoardProps {
   board: Board
@@ -200,6 +201,14 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
         position: columns.length,
         cards: []
       }
+      
+      // Track column creation achievement
+      try {
+        achievementManager.trackColumnCreated()
+      } catch (error) {
+        console.warn('Achievement tracking failed:', error)
+      }
+      
       const newColumns = [...columns, newColumn]
       updateColumnsImmediate(newColumns)
       updateParentBoard(newColumns)

@@ -305,24 +305,6 @@ export default function Sidebar({
               {isGuest ? 'Kanban (Guest)' : 'Kanban Boards'}
             </h1>
             <div className="sidebar-header-actions">
-              {user && (
-                <button
-                  className="profile-btn"
-                  onClick={onOpenProfile}
-                  title={`Profile - ${user.displayName || user.email}`}
-                >
-                  <User size={18} />
-                </button>
-              )}
-              {isGuest && (
-                <button
-                  className="sign-in-btn"
-                  onClick={onOpenSignIn}
-                  title="Sign up to save your boards"
-                >
-                  <User size={18} />
-                </button>
-              )}
               <button
                 className="settings-btn"
                 onClick={onOpenSettings}
@@ -442,6 +424,34 @@ export default function Sidebar({
               </button>
             </div>
           )}
+
+          {/* Profile Section */}
+          <div className="sidebar-profile-section">
+            <button
+              className="profile-button-prominent"
+              onClick={onOpenProfile}
+              title={user ? `Profile - ${user.displayName || user.email}` : 'View Profile & Achievements'}
+            >
+              <div className="profile-button-content">
+                <User size={20} />
+                <div className="profile-info">
+                  <span className="profile-name">
+                    {user ? (user.displayName || 'User') : (isGuest ? 'Guest User' : 'Profile')}
+                  </span>
+                  <span className="profile-subtitle">View achievements</span>
+                </div>
+              </div>
+            </button>
+            {isGuest && (
+              <button
+                className="upgrade-button"
+                onClick={onOpenSignIn}
+                title="Sign up to save your progress"
+              >
+                Sign up to save progress
+              </button>
+            )}
+          </div>
         </>
       )}
     </aside>
