@@ -31,7 +31,7 @@ const BASE_ACHIEVEMENTS = [
     type: 'cards_completed' as const,
     name: 'Task Master',
     description: 'Complete cards',
-    baseRequirement: 10,
+    baseRequirement: 1,
     icon: 'trophy' as const
   },
   {
@@ -65,14 +65,6 @@ const BASE_ACHIEVEMENTS = [
     description: 'Create new columns',
     baseRequirement: 8,
     icon: 'medal' as const
-  },
-  {
-    id: 'speed_demon',
-    type: 'speed_demon' as const,
-    name: 'Productivity Pro',
-    description: 'Complete 5+ cards in one day',
-    baseRequirement: 1,
-    icon: 'trophy' as const
   },
   {
     id: 'perfectionist',

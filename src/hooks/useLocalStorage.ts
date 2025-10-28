@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  // Use ref to track if we're in the middle of an update to prevent loops
-  const isUpdatingRef = useRef(false)
+  // Track last saved value to prevent unnecessary writes
+  const lastSavedRef = useRef<string>('')
   
   // Get value from localStorage or use initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -12,39 +12,63 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       }
       
       const item = window.localStorage.getItem(key)
-      return item ? JSON.parse(item) : initialValue
+      if (item) {
+        lastSavedRef.current = item
+        return JSON.parse(item)
+      }
+      return initialValue
     } catch (error) {
       console.warn(`Error reading localStorage key "${key}":`, error)
       return initialValue
     }
   })
 
+  // Debounced save to prevent excessive writes
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
   // Return a wrapped version of useState's setter function that persists the new value to localStorage
   const setValue = useCallback((value: T | ((val: T) => T)) => {
-    // Prevent infinite loops during updates
-    if (isUpdatingRef.current) {
-      return
-    }
-    
     try {
-      isUpdatingRef.current = true
-      
       // Allow value to be a function so we have the same API as useState
       const valueToStore = value instanceof Function ? value(storedValue) : value
       
-      // Save state
+      // Save state immediately
       setStoredValue(valueToStore)
       
-      // Save to localStorage
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, JSON.stringify(valueToStore))
+      // Debounce localStorage writes
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
       }
+      
+      saveTimeoutRef.current = setTimeout(() => {
+        try {
+          if (typeof window !== 'undefined') {
+            const serialized = JSON.stringify(valueToStore)
+            // Only save if the data has actually changed
+            if (serialized !== lastSavedRef.current) {
+              window.localStorage.setItem(key, serialized)
+              lastSavedRef.current = serialized
+              console.log(`Saved to localStorage: ${key}`) // Debug log
+            }
+          }
+        } catch (error) {
+          console.error(`Error saving to localStorage key "${key}":`, error)
+        }
+      }, 100) // 100ms debounce
+      
     } catch (error) {
       console.warn(`Error setting localStorage key "${key}":`, error)
-    } finally {
-      isUpdatingRef.current = false
     }
   }, [key, storedValue])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
 
   return [storedValue, setValue] as const
 }

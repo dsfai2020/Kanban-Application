@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { User, Mail, Camera, Save, X, LogOut, Edit2, Trophy } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { achievementManager } from '../utils/achievementManager'
 import Badge from './Badge'
 import type { UserProfile } from '../types'
+import type { UserStats } from '../types/achievements'
 import './ProfileModal.css'
 
 interface ProfileModalProps {
@@ -20,6 +21,13 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  
+  // State to track achievement stats and force re-renders when they change
+  const [userStats, setUserStats] = useState<UserStats>(() => achievementManager.getUserStats())
+  const [achievementData, setAchievementData] = useState(() => ({
+    badgeUnlocks: achievementManager.getBadgeUnlocks(),
+    achievementsWithStatus: achievementManager.getAllAchievementsWithStatus()
+  }))
 
   const [formData, setFormData] = useState({
     displayName: profile?.displayName || '',
@@ -30,6 +38,28 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
       autoSave: profile?.preferences.autoSave ?? true,
     },
   })
+
+  // Effect to update achievement data when modal opens or data changes
+  useEffect(() => {
+    if (!isOpen) return
+
+    // Update stats when modal opens
+    const updateStats = () => {
+      setUserStats(achievementManager.getUserStats())
+      setAchievementData({
+        badgeUnlocks: achievementManager.getBadgeUnlocks(),
+        achievementsWithStatus: achievementManager.getAllAchievementsWithStatus()
+      })
+    }
+
+    // Initial update
+    updateStats()
+
+    // Set up polling to check for updates while modal is open
+    const interval = setInterval(updateStats, 1000) // Check every second
+
+    return () => clearInterval(interval)
+  }, [isOpen])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -188,28 +218,28 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                 <div className="stat-card">
                   <div className="stat-icon">📋</div>
                   <div className="stat-info">
-                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCompleted}</div>
+                    <div className="stat-number">{userStats.totalCardsCompleted}</div>
                     <div className="stat-label">Cards Completed</div>
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="stat-icon">✨</div>
                   <div className="stat-info">
-                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCreated}</div>
+                    <div className="stat-number">{userStats.totalCardsCreated}</div>
                     <div className="stat-label">Cards Created</div>
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="stat-icon">🔥</div>
                   <div className="stat-info">
-                    <div className="stat-number">{achievementManager.getUserStats().currentDailyStreak}</div>
+                    <div className="stat-number">{userStats.currentDailyStreak}</div>
                     <div className="stat-label">Current Streak</div>
                   </div>
                 </div>
                 <div className="stat-card">
                   <div className="stat-icon">🏆</div>
                   <div className="stat-info">
-                    <div className="stat-number">{achievementManager.getBadgeUnlocks().length}</div>
+                    <div className="stat-number">{achievementData.badgeUnlocks.length}</div>
                     <div className="stat-label">Badges Earned</div>
                   </div>
                 </div>
@@ -220,7 +250,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             <div className="profile-section">
               <h3 className="section-title">Achievement Badges</h3>
               <div className="badges-grid">
-                {achievementManager.getAllAchievementsWithStatus().map(({ achievement, status }) => (
+                {achievementData.achievementsWithStatus.map(({ achievement, status }) => (
                   <Badge
                     key={achievement.id}
                     achievement={achievement}
@@ -399,25 +429,25 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               <div className="achievements-section">
                 <div className="achievements-stats">
                   <div className="stat-card">
-                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCompleted}</div>
+                    <div className="stat-number">{userStats.totalCardsCompleted}</div>
                     <div className="stat-label">Cards Completed</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-number">{achievementManager.getUserStats().totalCardsCreated}</div>
+                    <div className="stat-number">{userStats.totalCardsCreated}</div>
                     <div className="stat-label">Cards Created</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-number">{achievementManager.getUserStats().currentDailyStreak}</div>
+                    <div className="stat-number">{userStats.currentDailyStreak}</div>
                     <div className="stat-label">Day Streak</div>
                   </div>
                   <div className="stat-card">
-                    <div className="stat-number">{achievementManager.getBadgeUnlocks().length}</div>
+                    <div className="stat-number">{achievementData.badgeUnlocks.length}</div>
                     <div className="stat-label">Badges Earned</div>
                   </div>
                 </div>
 
                 <div className="badges-grid">
-                  {achievementManager.getAllAchievementsWithStatus().map(({ achievement, status }) => (
+                  {achievementData.achievementsWithStatus.map(({ achievement, status }) => (
                     <Badge
                       key={achievement.id}
                       achievement={achievement}
@@ -430,7 +460,7 @@ export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                 <div className="achievements-progress">
                   <h4>Next Goals</h4>
                   <div className="next-goals">
-                    {achievementManager.getAllAchievementsWithStatus()
+                    {achievementData.achievementsWithStatus
                       .filter(({ status }) => !status.isUnlocked && status.percentage > 0)
                       .sort((a, b) => b.status.percentage - a.status.percentage)
                       .slice(0, 3)

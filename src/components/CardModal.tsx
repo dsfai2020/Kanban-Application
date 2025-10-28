@@ -39,13 +39,6 @@ export default function CardModal({ card, onUpdate, onDelete, onClose }: CardMod
       updatedAt: new Date()
     }
     
-    // Track card update achievement
-    try {
-      achievementManager.trackCardCompleted()
-    } catch (error) {
-      console.warn('Achievement tracking failed:', error)
-    }
-    
     onUpdate(updatedCard)
     onClose()
   }

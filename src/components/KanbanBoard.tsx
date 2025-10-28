@@ -31,24 +31,77 @@ interface KanbanBoardProps {
 export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBoardProps) {
   const [columns, setColumns] = useState(board.columns)
   const lastUpdateRef = useRef<number>(0)
+  const saveTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   // Sync columns with board changes when a different board is selected
   useEffect(() => {
     setColumns(board.columns)
   }, [board.id, board.columns])
 
-  // Simple update function that only updates local state during drag
+  // Debounced save function to prevent excessive updates
+  const debouncedUpdateParent = useCallback((newColumns: ColumnType[]) => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+    
+    saveTimeoutRef.current = setTimeout(() => {
+      onUpdateBoard({
+        ...board,
+        columns: newColumns
+      })
+    }, 200) // 200ms debounce
+  }, [board, onUpdateBoard])
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Debug: Monitor data changes to help identify data loss
+  useEffect(() => {
+    console.log('Board data changed:', {
+      boardId: board.id,
+      columnsCount: columns.length,
+      totalCards: columns.reduce((sum, col) => sum + col.cards.length, 0),
+      timestamp: new Date().toISOString()
+    })
+  }, [board.id, columns])
+
+  // Track cards in Done column for achievement triggering
+  useEffect(() => {
+    const doneColumn = columns.find(col => isDoneColumn(col.title))
+    
+    if (doneColumn && doneColumn.cards.length > 0) {
+      console.log('Done column detected with cards:', {
+        columnTitle: doneColumn.title,
+        cardCount: doneColumn.cards.length,
+        cardIds: doneColumn.cards.map(c => c.id)
+      })
+      
+      // Ensure all cards in done column are tracked
+      doneColumn.cards.forEach(card => {
+        try {
+          achievementManager.trackCardMovedToDone(card.id)
+        } catch (error) {
+          console.warn('Achievement tracking failed for card:', card.id, error)
+        }
+      })
+    }
+  }, [columns])
+
+// Simple update function that only updates local state during drag
   const updateColumnsImmediate = useCallback((newColumns: ColumnType[]) => {
     setColumns(newColumns)
   }, [])
 
-  // Function to update parent - called only when drag completes
+  // Function to update parent - now debounced
   const updateParentBoard = useCallback((newColumns: ColumnType[]) => {
-    onUpdateBoard({
-      ...board,
-      columns: newColumns
-    })
-  }, [board, onUpdateBoard])
+    debouncedUpdateParent(newColumns)
+  }, [debouncedUpdateParent])
   const [activeCard, setActiveCard] = useState<CardType | null>(null)
   const [isCreatingColumn, setIsCreatingColumn] = useState(false)
   const [newColumnTitle, setNewColumnTitle] = useState('')
@@ -149,6 +202,48 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
 
     if (!activeColumn || !overColumn) return
 
+    console.log('handleDragEnd: Found columns', {
+      activeColumn: activeColumn.title,
+      overColumn: overColumn.title,
+      sameColumn: activeColumn.id === overColumn.id
+    })
+
+    // Check if card moved between columns for achievement tracking
+    if (activeColumn.id !== overColumn.id) {
+      console.log('Cross-column move detected')
+      
+      const isMovingToDone = isDoneColumn(overColumn.title)
+      const isMovingFromDone = isDoneColumn(activeColumn.title)
+
+      console.log('Achievement tracking check:', {
+        from: activeColumn.title,
+        to: overColumn.title,
+        isMovingToDone,
+        isMovingFromDone,
+        cardId: activeCard.id
+      })
+
+      // Track achievement when card is moved to done
+      if (isMovingToDone && !isMovingFromDone) {
+        console.log('Should track card completion for:', activeCard.id)
+        try {
+          achievementManager.trackCardMovedToDone(activeCard.id)
+        } catch (error) {
+          console.warn('Achievement tracking failed:', error)
+        }
+      }
+      
+      // Remove from completed tracking when moved out of done
+      if (isMovingFromDone && !isMovingToDone) {
+        console.log('Should remove card completion for:', activeCard.id)
+        try {
+          achievementManager.trackCardRemovedFromDone(activeCard.id)
+        } catch (error) {
+          console.warn('Achievement tracking failed:', error)
+        }
+      }
+    }
+
     // Only handle same-column reordering here (cross-column was handled in dragOver)
     if (activeColumn.id === overColumn.id) {
       const activeIndex = activeColumn.cards.findIndex(card => card.id === activeId)
@@ -165,7 +260,6 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
           return column
         })
         updateColumnsImmediate(newColumns)
-        // Update parent after drag completes
         updateParentBoard(newColumns)
       }
     } else {
@@ -191,6 +285,18 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
     )
   }
 
+  const isDoneColumn = (columnTitle: string): boolean => {
+    const lowerTitle = columnTitle.toLowerCase().trim()
+    const isDone = lowerTitle === 'done' || 
+           lowerTitle === 'completed' || 
+           lowerTitle === 'complete' || 
+           lowerTitle === 'finished' || 
+           lowerTitle === 'finish'
+    
+    console.log('isDoneColumn check:', { columnTitle, lowerTitle, isDone })
+    return isDone
+  }
+
   const handleCreateColumn = (e: React.FormEvent) => {
     e.preventDefault()
     if (newColumnTitle.trim()) {
@@ -210,8 +316,8 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
       }
       
       const newColumns = [...columns, newColumn]
-      updateColumnsImmediate(newColumns)
-      updateParentBoard(newColumns)
+      setColumns(newColumns) // Update immediately for UI
+      updateParentBoard(newColumns) // Debounced save
       setNewColumnTitle('')
       setIsCreatingColumn(false)
     }

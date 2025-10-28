@@ -8,9 +8,8 @@ export type AchievementType =
   | 'boards_created'
   | 'columns_created'
   | 'consecutive_days'
-  | 'speed_demon' // Complete 5 cards in one day
-  | 'perfectionist' // Complete all checklist items on 10 cards
-  | 'organizer' // Create 5 different priority levels
+  | 'perfectionist' // Complete all checklist items on cards
+  | 'organizer' // Use different priority levels
 
 export interface Achievement {
   id: string
@@ -42,7 +41,7 @@ export interface UserStats {
   lastLoginDate: string
   joinDate: string
   perfectCards: number // Cards with all checklist items completed
-  speedDemons: number // Days with 5+ cards completed
+  completedCardIds: string[] // Track which cards have been completed to prevent double counting
 }
 
 export interface BadgeUnlock {

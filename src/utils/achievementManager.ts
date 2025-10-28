@@ -29,7 +29,7 @@ const getDefaultUserStats = (): UserStats => ({
   lastLoginDate: new Date().toDateString(),
   joinDate: new Date().toDateString(),
   perfectCards: 0,
-  speedDemons: 0
+  completedCardIds: [] // Track which cards have been completed to prevent double counting
 })
 
 // Initialize default user progress
@@ -38,7 +38,7 @@ const getDefaultUserProgress = (): UserProgress => {
   const achievementTypes: AchievementType[] = [
     'daily_streak', 'cards_completed', 'cards_created', 
     'checklists_completed', 'boards_created', 'columns_created',
-    'speed_demon', 'perfectionist', 'organizer'
+    'perfectionist', 'organizer'
   ]
   
   achievementTypes.forEach(type => {
@@ -70,7 +70,12 @@ class AchievementManager {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.USER_STATS)
       if (stored) {
-        return { ...getDefaultUserStats(), ...JSON.parse(stored) }
+        const parsed = JSON.parse(stored)
+        // Ensure completedCardIds exists for backward compatibility
+        if (!parsed.completedCardIds) {
+          parsed.completedCardIds = []
+        }
+        return { ...getDefaultUserStats(), ...parsed }
       }
     } catch (error) {
       console.error('Error loading user stats:', error)
@@ -207,11 +212,40 @@ class AchievementManager {
     return newUnlocks
   }
 
-  // Public methods to track different actions
-  trackCardCompleted(): BadgeUnlock[] {
+  // Track card moved to done column with duplicate prevention
+  trackCardMovedToDone(cardId: string): BadgeUnlock[] {
+    console.log('trackCardMovedToDone called with cardId:', cardId)
+    
+    // Check if this card has already been counted as completed
+    if (this.userStats.completedCardIds.includes(cardId)) {
+      console.log('Card already completed, skipping')
+      return [] // Card already counted, no achievement unlocks
+    }
+    
+    console.log('Before increment - totalCardsCompleted:', this.userStats.totalCardsCompleted)
+    
+    // Add card to completed list
+    this.userStats.completedCardIds.push(cardId)
     this.userStats.totalCardsCompleted++
+    
+    console.log('After increment - totalCardsCompleted:', this.userStats.totalCardsCompleted)
+    
     this.saveUserStats()
-    return this.updateProgress('cards_completed', this.userStats.totalCardsCompleted)
+    
+    const unlocks = this.updateProgress('cards_completed', this.userStats.totalCardsCompleted)
+    console.log('Achievement unlocks:', unlocks)
+    
+    return unlocks
+  }
+
+  // Remove card from completed list (when moved out of done column)
+  trackCardRemovedFromDone(cardId: string): void {
+    const index = this.userStats.completedCardIds.indexOf(cardId)
+    if (index > -1) {
+      this.userStats.completedCardIds.splice(index, 1)
+      // Note: We don't decrement totalCardsCompleted to prevent achievement regression
+      this.saveUserStats()
+    }
   }
 
   trackCardCreated(): BadgeUnlock[] {
@@ -242,20 +276,6 @@ class AchievementManager {
     this.userStats.perfectCards++
     this.saveUserStats()
     return this.updateProgress('perfectionist', this.userStats.perfectCards)
-  }
-
-  trackSpeedDemon(): BadgeUnlock[] {
-    this.userStats.speedDemons++
-    this.saveUserStats()
-    return this.updateProgress('speed_demon', this.userStats.speedDemons)
-  }
-
-  // Check if user completed 5+ cards today (for speed demon tracking)
-  checkSpeedDemon(cardsCompletedToday: number): BadgeUnlock[] {
-    if (cardsCompletedToday >= 5) {
-      return this.trackSpeedDemon()
-    }
-    return []
   }
 
   // Get achievement status for display

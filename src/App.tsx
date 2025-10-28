@@ -38,6 +38,13 @@ function KanbanApp() {
   // Achievement notifications
   const { notifications, showNotification, removeNotification } = useAchievementNotifications()
 
+  // Expose achievementManager to window for testing (development only)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).achievementManager = achievementManager
+    }
+  }, [])
+
   // Sync user state with auth context
   useEffect(() => {
     if (authState.user !== appState.user) {
