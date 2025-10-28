@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Plus, MoreHorizontal, Trash2, Edit2, ChevronUp, ChevronDown, GripVertical, Settings, User } from 'lucide-react'
 import type { Board, User as UserType } from '../types'
+import AchievementBanner from './AchievementBanner'
 
 interface SortableBoardItemProps {
   board: Board
@@ -335,6 +336,9 @@ export default function Sidebar({
               </button>
             </div>
           )}
+
+          {/* Achievement Banner */}
+          <AchievementBanner />
 
       <DndContext
         sensors={sensors}

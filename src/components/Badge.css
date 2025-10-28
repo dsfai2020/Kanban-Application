@@ -82,48 +82,34 @@
 }
 
 .badge-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 12px;
-  min-width: 200px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  margin-bottom: 8px;
-  /* Mobile optimizations */
-  max-width: 280px;
+  width: 280px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 10000;
   white-space: normal;
+}
+
+/* Add backdrop for better visibility */
+.badge-tooltip::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
 }
 
 /* Mobile tooltip positioning */
 @media (max-width: 768px) {
   .badge-tooltip {
-    position: fixed;
-    bottom: auto;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    min-width: 280px;
+    width: 90%;
     max-width: 320px;
-    margin: 0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    border-width: 2px;
-  }
-  
-  /* Add backdrop for mobile */
-  .badge-tooltip::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: -1;
   }
 }
 

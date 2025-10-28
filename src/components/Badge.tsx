@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { Trophy, Award, Medal, Star, Crown } from 'lucide-react'
 import type { Achievement } from '../types/achievements'
 import { calculateProgress } from '../utils/achievements'
@@ -21,6 +22,7 @@ const ICON_MAP = {
 
 export default function Badge({ achievement, isUnlocked, currentProgress, showTooltip = true }: BadgeProps) {
   const [showDetails, setShowDetails] = useState(false)
+  const [tooltipPosition, setTooltipPosition] = useState<{ top: number; left: number; showBelow: boolean } | null>(null)
   const badgeRef = useRef<HTMLDivElement>(null)
   const IconComponent = ICON_MAP[achievement.icon]
   const progress = calculateProgress(currentProgress, achievement.requirement)
@@ -54,6 +56,33 @@ export default function Badge({ achievement, isUnlocked, currentProgress, showTo
   const handleMouseEnter = () => {
     if (showTooltip && !('ontouchstart' in window)) {
       // Only show on hover for non-touch devices
+      if (badgeRef.current) {
+        const rect = badgeRef.current.getBoundingClientRect()
+        const tooltipWidth = 280
+        const tooltipHeight = 150 // Approximate height
+        const padding = 10
+        
+        let left = rect.left + rect.width / 2
+        let top = rect.top - padding
+        
+        // Adjust horizontal position if tooltip would go off screen
+        if (left - tooltipWidth / 2 < padding) {
+          // Too far left
+          left = tooltipWidth / 2 + padding
+        } else if (left + tooltipWidth / 2 > window.innerWidth - padding) {
+          // Too far right
+          left = window.innerWidth - tooltipWidth / 2 - padding
+        }
+        
+        // Adjust vertical position if tooltip would go off top
+        if (top - tooltipHeight < padding) {
+          // Show below badge instead
+          top = rect.bottom + padding
+          setTooltipPosition({ top, left, showBelow: true })
+        } else {
+          setTooltipPosition({ top, left, showBelow: false })
+        }
+      }
       setShowDetails(true)
     }
   }
@@ -62,6 +91,7 @@ export default function Badge({ achievement, isUnlocked, currentProgress, showTo
     if (showTooltip && !('ontouchstart' in window)) {
       // Only hide on hover leave for non-touch devices
       setShowDetails(false)
+      setTooltipPosition(null)
     }
   }
 
@@ -133,8 +163,15 @@ export default function Badge({ achievement, isUnlocked, currentProgress, showTo
         )}
       </div>
 
-      {showDetails && showTooltip && (
-        <div className="badge-tooltip">
+      {showDetails && showTooltip && tooltipPosition && createPortal(
+        <div 
+          className="badge-tooltip"
+          style={{
+            top: `${tooltipPosition.top}px`,
+            left: `${tooltipPosition.left}px`,
+            transform: tooltipPosition.showBelow ? 'translate(-50%, 0)' : 'translate(-50%, -100%)'
+          }}
+        >
           <div className="tooltip-header">
             <strong>{achievement.name}</strong>
             <span className={`tier-badge ${achievement.tier}`}>
@@ -151,7 +188,8 @@ export default function Badge({ achievement, isUnlocked, currentProgress, showTo
               </span>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
 </div>
