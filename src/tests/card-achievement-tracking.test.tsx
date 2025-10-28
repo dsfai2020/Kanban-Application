@@ -20,7 +20,7 @@ Object.defineProperty(window, 'localStorage', {
 vi.mock('../utils/achievementManager', () => ({
   achievementManager: {
     trackCardCreated: vi.fn(() => []),
-    trackCardCompleted: vi.fn(() => []),
+    trackCardMovedToDone: vi.fn(() => []),
     trackChecklistCompleted: vi.fn(() => []),
     trackBoardCreated: vi.fn(() => []),
     trackColumnCreated: vi.fn(() => []),
@@ -61,7 +61,7 @@ describe('Card Achievement Tracking Tests', () => {
     
     // Reset all mocks to their default implementations
     vi.mocked(achievementManager.trackCardCreated).mockImplementation(() => [])
-    vi.mocked(achievementManager.trackCardCompleted).mockImplementation(() => [])
+    vi.mocked(achievementManager.trackCardMovedToDone).mockImplementation(() => [])
     vi.mocked(achievementManager.trackChecklistCompleted).mockImplementation(() => [])
     vi.mocked(achievementManager.trackBoardCreated).mockImplementation(() => [])
     vi.mocked(achievementManager.trackColumnCreated).mockImplementation(() => [])
@@ -221,7 +221,7 @@ describe('Card Achievement Tracking Tests', () => {
     it('should verify achievement manager is properly imported and accessible', () => {
       expect(achievementManager).toBeDefined()
       expect(achievementManager.trackCardCreated).toBeDefined()
-      expect(achievementManager.trackCardCompleted).toBeDefined()
+      expect(achievementManager.trackCardMovedToDone).toBeDefined()
       expect(achievementManager.trackChecklistCompleted).toBeDefined()
       expect(achievementManager.trackColumnCreated).toBeDefined()
       expect(achievementManager.trackBoardCreated).toBeDefined()

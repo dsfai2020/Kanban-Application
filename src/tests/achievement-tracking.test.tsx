@@ -23,7 +23,7 @@ Object.defineProperty(window, 'localStorage', {
 vi.mock('../utils/achievementManager', () => ({
   achievementManager: {
     trackCardCreated: vi.fn(),
-    trackCardCompleted: vi.fn(),
+    trackCardMovedToDone: vi.fn(),
     trackChecklistCompleted: vi.fn(),
     trackBoardCreated: vi.fn(),
     trackColumnCreated: vi.fn(),
@@ -220,7 +220,7 @@ describe('Achievement Tracking Integration', () => {
       await user.click(saveBtn)
 
       // Verify achievement tracking was called
-      expect(achievementManager.trackCardCompleted).toHaveBeenCalledTimes(1)
+      expect(achievementManager.trackCardMovedToDone).toHaveBeenCalledTimes(1)
       expect(onUpdate).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Updated Test Card'
@@ -251,7 +251,7 @@ describe('Achievement Tracking Integration', () => {
       await user.click(screen.getByText('Card 1'))
       await user.click(screen.getByText('Save'))
 
-      expect(achievementManager.trackCardCompleted).toHaveBeenCalledTimes(1)
+      expect(achievementManager.trackCardMovedToDone).toHaveBeenCalledTimes(1)
 
       // Test second card
       rerender(
@@ -268,7 +268,7 @@ describe('Achievement Tracking Integration', () => {
       await user.click(screen.getByText('Card 2'))
       await user.click(screen.getByText('Save'))
 
-      expect(achievementManager.trackCardCompleted).toHaveBeenCalledTimes(2)
+      expect(achievementManager.trackCardMovedToDone).toHaveBeenCalledTimes(2)
     })
   })
 

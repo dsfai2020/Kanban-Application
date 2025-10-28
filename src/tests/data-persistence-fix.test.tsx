@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import type { Column as ColumnType, Card as CardType } from '../types'
 
 // Mock localStorage
 const localStorageMock = {
