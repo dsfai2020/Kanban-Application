@@ -8,6 +8,7 @@ import KanbanBoard from './components/KanbanBoard'
 import SettingsModal from './components/SettingsModal'
 import SignInModal from './components/SignInModal'
 import ProfileModal from './components/ProfileModal'
+import DayStatus from './components/DayStatus'
 import type { Board, AppState, AppSettings } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { achievementManager } from './utils/achievementManager'
@@ -340,17 +341,24 @@ function KanbanApp() {
                 Sign In
               </button>
             </div>
-          ) : activeBoard ? (
-            <KanbanBoard 
-              board={activeBoard} 
-              onUpdateBoard={handleUpdateBoard}
-              settings={appState.settings || defaultSettings}
-            />
           ) : (
-            <div className="empty-state">
-              <h2>No Board Selected</h2>
-              <p>Create a new board or select an existing one from the sidebar.</p>
-            </div>
+            <>
+              {/* Day Status - appears at top when authenticated */}
+              <DayStatus />
+              
+              {activeBoard ? (
+                <KanbanBoard 
+                  board={activeBoard} 
+                  onUpdateBoard={handleUpdateBoard}
+                  settings={appState.settings || defaultSettings}
+                />
+              ) : (
+                <div className="empty-state">
+                  <h2>No Board Selected</h2>
+                  <p>Create a new board or select an existing one from the sidebar.</p>
+                </div>
+              )}
+            </>
           )}
         </main>
       </DndContext>
