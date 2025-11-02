@@ -12,6 +12,7 @@ import type { Board, AppState, AppSettings } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { achievementManager } from './utils/achievementManager'
 import AchievementNotificationsContainer, { useAchievementNotifications } from './components/AchievementNotificationsContainer'
+import { localStorageDebug } from './utils/localStorageDebug'
 import './App.css'
 
 function KanbanApp() {
@@ -38,10 +39,17 @@ function KanbanApp() {
   // Achievement notifications
   const { notifications, showNotification, removeNotification } = useAchievementNotifications()
 
-  // Expose achievementManager to window for testing (development only)
+  // Expose debugging tools to window for testing (development only)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      (window as any).achievementManager = achievementManager
+      ;(window as any).achievementManager = achievementManager
+      ;(window as any).localStorageDebug = localStorageDebug
+      
+      // Auto-run localStorage diagnostic on app start
+      if (import.meta.env.DEV) {
+        console.log('🛠️ Development mode - localStorage diagnostic available')
+        console.log('Run localStorageDebug.runFullDiagnostic() in console to test')
+      }
     }
   }, [])
 

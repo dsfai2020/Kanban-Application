@@ -38,18 +38,17 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
     setColumns(board.columns)
   }, [board.id, board.columns])
 
-  // Debounced save function to prevent excessive updates
-  const debouncedUpdateParent = useCallback((newColumns: ColumnType[]) => {
+
+
+  // Force immediate save for critical operations (like drag end)
+  const forceImmediateSave = useCallback((newColumns: ColumnType[]) => {
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
     }
-    
-    saveTimeoutRef.current = setTimeout(() => {
-      onUpdateBoard({
-        ...board,
-        columns: newColumns
-      })
-    }, 200) // 200ms debounce
+    onUpdateBoard({
+      ...board,
+      columns: newColumns
+    })
   }, [board, onUpdateBoard])
 
   // Cleanup timeout on unmount
@@ -98,10 +97,7 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
     setColumns(newColumns)
   }, [])
 
-  // Function to update parent - now debounced
-  const updateParentBoard = useCallback((newColumns: ColumnType[]) => {
-    debouncedUpdateParent(newColumns)
-  }, [debouncedUpdateParent])
+
   const [activeCard, setActiveCard] = useState<CardType | null>(null)
   const [isCreatingColumn, setIsCreatingColumn] = useState(false)
   const [newColumnTitle, setNewColumnTitle] = useState('')
@@ -260,11 +256,11 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
           return column
         })
         updateColumnsImmediate(newColumns)
-        updateParentBoard(newColumns)
+        forceImmediateSave(newColumns)
       }
     } else {
-      // For cross-column moves, just update the parent with current state
-      updateParentBoard(columns)
+      // For cross-column moves, just update the parent with current state immediately
+      forceImmediateSave(columns)
     }
   }
 
@@ -317,7 +313,7 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
       
       const newColumns = [...columns, newColumn]
       setColumns(newColumns) // Update immediately for UI
-      updateParentBoard(newColumns) // Debounced save
+      forceImmediateSave(newColumns) // Critical: column creation
       setNewColumnTitle('')
       setIsCreatingColumn(false)
     }
@@ -362,12 +358,12 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
                     col.id === updatedColumn.id ? updatedColumn : col
                   )
                   updateColumnsImmediate(newColumns)
-                  updateParentBoard(newColumns)
+                  forceImmediateSave(newColumns)
                 }}
                 onDeleteColumn={(columnId: string) => {
                   const newColumns = columns.filter(col => col.id !== columnId)
                   updateColumnsImmediate(newColumns)
-                  updateParentBoard(newColumns)
+                  forceImmediateSave(newColumns)
                 }}
               />
             ))}

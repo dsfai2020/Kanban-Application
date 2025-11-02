@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kanban localStorage Debug - Firefox Desktop vs Mobile</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success { background: #2d5a27; }
+        .error { background: #5a2727; }
+        .warning { background: #5a4527; }
+        .info { background: #27355a; }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #005999; }
+        #results { margin-top: 20px; }
+        .section { 
+            border: 1px solid #444; 
+            padding: 15px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 Kanban localStorage Diagnostic</h1>
+    <p>This tool helps diagnose localStorage issues between Firefox desktop and mobile versions.</p>
+    
+    <div class="section">
+        <h2>🖥️ System Information</h2>
+        <div id="system-info"></div>
+    </div>
+    
+    <div class="section">
+        <h2>🧪 Tests</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="testBasicStorage()">Test Basic Storage</button>
+        <button onclick="testKanbanData()">Test Kanban Data</button>
+        <button onclick="testStorageQuota()">Test Storage Quota</button>
+        <button onclick="clearAllData()">Clear All Data</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+        
+        function displaySystemInfo() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Is Mobile': /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+                'Is Firefox': /Firefox/i.test(navigator.userAgent),
+                'Is Firefox Mobile': /Mobile.*Firefox/i.test(navigator.userAgent),
+                'Touch Support': 'ontouchstart' in window,
+                'Screen Size': `${screen.width}x${screen.height}`,
+                'Viewport Size': `${window.innerWidth}x${window.innerHeight}`,
+                'Storage Support': typeof Storage !== 'undefined',
+                'LocalStorage Available': typeof localStorage !== 'undefined'
+            };
+            
+            let html = '';
+            for (const [key, value] of Object.entries(info)) {
+                html += `<strong>${key}:</strong> ${value}<br>`;
+            }
+            document.getElementById('system-info').innerHTML = html;
+        }
+        
+        function testBasicStorage() {
+            addResult('🧪 Testing basic localStorage...', 'info');
+            
+            try {
+                const testKey = 'kanban_test_basic';
+                const testValue = 'Hello World - ' + Date.now();
+                
+                // Test write
+                localStorage.setItem(testKey, testValue);
+                addResult('✅ Write test passed', 'success');
+                
+                // Test read
+                const retrieved = localStorage.getItem(testKey);
+                if (retrieved === testValue) {
+                    addResult('✅ Read test passed', 'success');
+                } else {
+                    addResult(`❌ Read test failed. Expected: "${testValue}", Got: "${retrieved}"`, 'error');
+                }
+                
+                // Test delete
+                localStorage.removeItem(testKey);
+                const afterDelete = localStorage.getItem(testKey);
+                if (afterDelete === null) {
+                    addResult('✅ Delete test passed', 'success');
+                } else {
+                    addResult(`❌ Delete test failed. Item still exists: "${afterDelete}"`, 'error');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Basic storage test failed: ${error.message}`, 'error');
+                if (error.message.includes('QuotaExceededError')) {
+                    addResult('💡 This might be due to storage quota exceeded', 'warning');
+                }
+                if (error.message.includes('SecurityError')) {
+                    addResult('💡 This might be due to private browsing or security settings', 'warning');
+                }
+            }
+        }
+        
+        function testKanbanData() {
+            addResult('🧪 Testing Kanban app data structure...', 'info');
+            
+            try {
+                const kanbanTestData = {
+                    boards: [{
+                        id: 'test-board-' + Date.now(),
+                        title: 'Test Board',
+                        description: 'Test board for localStorage debugging',
+                        columns: [{
+                            id: 'test-col-1',
+                            title: 'To Do',
+                            boardId: 'test-board',
+                            position: 0,
+                            cards: [{
+                                id: 'test-card-1',
+                                title: 'Test Card',
+                                description: 'This is a test card to verify localStorage functionality',
+                                columnId: 'test-col-1',
+                                position: 0,
+                                priority: 'medium',
+                                tags: ['test', 'localStorage'],
+                                createdAt: new Date().toISOString(),
+                                updatedAt: new Date().toISOString(),
+                                checklist: [
+                                    { id: 'check-1', text: 'Test localStorage', completed: false },
+                                    { id: 'check-2', text: 'Verify data persistence', completed: true }
+                                ]
+                            }]
+                        }],
+                        createdAt: new Date().toISOString(),
+                        isActive: true
+                    }],
+                    activeBoard: 'test-board',
+                    settings: {
+                        columnCardLimit: 8,
+                        theme: 'dark',
+                        autoSave: true
+                    },
+                    user: null
+                };
+                
+                const testKey = 'kanban-app-state-test';
+                const serialized = JSON.stringify(kanbanTestData);
+                
+                addResult(`📦 Test data size: ${serialized.length} characters`, 'info');
+                
+                // Test write
+                localStorage.setItem(testKey, serialized);
+                addResult('✅ Kanban data write successful', 'success');
+                
+                // Test read
+                const retrieved = localStorage.getItem(testKey);
+                if (retrieved) {
+                    addResult('✅ Kanban data read successful', 'success');
+                    
+                    // Test parse
+                    const parsed = JSON.parse(retrieved);
+                    addResult('✅ Kanban data parse successful', 'success');
+                    
+                    // Verify structure
+                    if (parsed.boards && parsed.boards.length > 0 && parsed.boards[0].columns) {
+                        addResult('✅ Kanban data structure verified', 'success');
+                    } else {
+                        addResult('❌ Kanban data structure verification failed', 'error');
+                    }
+                } else {
+                    addResult('❌ Kanban data read failed - no data retrieved', 'error');
+                }
+                
+                // Cleanup
+                localStorage.removeItem(testKey);
+                addResult('🧹 Test data cleaned up', 'info');
+                
+            } catch (error) {
+                addResult(`❌ Kanban data test failed: ${error.message}`, 'error');
+                console.error('Full error:', error);
+            }
+        }
+        
+        function testStorageQuota() {
+            addResult('🧪 Testing storage quota and limits...', 'info');
+            
+            try {
+                let totalSize = 0;
+                let keyCount = 0;
+                
+                // Calculate current usage
+                for (let key in localStorage) {
+                    if (localStorage.hasOwnProperty(key)) {
+                        totalSize += localStorage[key].length + key.length;
+                        keyCount++;
+                    }
+                }
+                
+                addResult(`📊 Current usage: ${totalSize} chars in ${keyCount} keys`, 'info');
+                addResult(`📊 Current usage: ~${Math.round(totalSize / 1024)} KB`, 'info');
+                
+                // Test quota by trying to store increasingly large amounts
+                const testKey = 'quota_test';
+                const chunkSize = 1024 * 100; // 100KB chunks
+                let testSize = chunkSize;
+                let maxSize = 0;
+                
+                try {
+                    while (testSize < 1024 * 1024 * 10) { // Up to 10MB
+                        const testData = 'x'.repeat(testSize);
+                        localStorage.setItem(testKey, testData);
+                        localStorage.removeItem(testKey);
+                        maxSize = testSize;
+                        testSize += chunkSize;
+                    }
+                } catch (quotaError) {
+                    addResult(`📏 Storage quota limit reached at ~${Math.round(maxSize / 1024)} KB`, 'warning');
+                }
+                
+                if (maxSize > 0) {
+                    addResult(`✅ Storage quota test completed - max test size: ${Math.round(maxSize / 1024)} KB`, 'success');
+                }
+                
+            } catch (error) {
+                addResult(`❌ Storage quota test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearAllData() {
+            try {
+                const keysBefore = Object.keys(localStorage).length;
+                localStorage.clear();
+                const keysAfter = Object.keys(localStorage).length;
+                addResult(`🧹 Cleared localStorage: ${keysBefore} → ${keysAfter} keys`, 'success');
+            } catch (error) {
+                addResult(`❌ Clear data failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function runAllTests() {
+            addResult('🚀 Starting full localStorage diagnostic...', 'info');
+            results.innerHTML = ''; // Clear previous results
+            
+            displaySystemInfo();
+            
+            setTimeout(() => testBasicStorage(), 100);
+            setTimeout(() => testKanbanData(), 500);
+            setTimeout(() => testStorageQuota(), 1000);
+            
+            setTimeout(() => {
+                addResult('✅ All tests completed!', 'success');
+                addResult('💡 If tests pass here but fail in the main app, the issue might be:', 'warning');
+                addResult('   - Race conditions in the main app', 'warning');
+                addResult('   - Component lifecycle issues', 'warning');
+                addResult('   - Multiple components trying to write simultaneously', 'warning');
+                addResult('   - Event timing issues between mobile and desktop', 'warning');
+            }, 1500);
+        }
+        
+        // Auto-run on load
+        window.addEventListener('load', () => {
+            displaySystemInfo();
+            addResult('🔬 localStorage diagnostic tool loaded', 'success');
+            addResult('💡 Click "Run All Tests" to begin diagnosis', 'info');
+        });
+    </script>
+</body>
+</html>

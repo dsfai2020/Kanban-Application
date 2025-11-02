@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firefox Desktop vs Mobile Persistence Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .status {
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 Firefox Desktop vs Mobile Persistence Test</h1>
+    <p>This test compares localStorage behavior between Firefox Desktop and Firefox Mobile to identify why cards don't persist on desktop.</p>
+
+    <div class="test-section">
+        <h2>Browser Detection</h2>
+        <div id="browser-info"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Tests</h2>
+        <button onclick="runBasicTest()">🧪 Basic localStorage Test</button>
+        <button onclick="runKanbanDataTest()">📋 Kanban Data Simulation</button>
+        <button onclick="runTimingTest()">⏱️ Timing & Debounce Test</button>
+        <button onclick="runStorageEventsTest()">📡 Storage Events Test</button>
+        <button onclick="clearAllStorage()">🗑️ Clear All Storage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
+            const logEntry = `[${timestamp}] ${type.toUpperCase()}: ${message}`;
+            testResults.push(logEntry);
+            document.getElementById('results').textContent = testResults.join('\n');
+            console.log(logEntry);
+        }
+
+        function detectBrowser() {
+            const ua = navigator.userAgent;
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+            const isFirefox = /Firefox/i.test(ua);
+            const firefoxVersion = ua.match(/Firefox\/(\d+)/)?.[1] || 'unknown';
+            
+            const info = {
+                userAgent: ua,
+                isFirefox: isFirefox,
+                firefoxVersion: firefoxVersion,
+                isMobile: isMobile,
+                platform: navigator.platform,
+                cookieEnabled: navigator.cookieEnabled,
+                storageQuota: 'checking...'
+            };
+
+            // Check storage quota
+            if ('storage' in navigator && 'estimate' in navigator.storage) {
+                navigator.storage.estimate().then(estimate => {
+                    info.storageQuota = `${Math.round(estimate.quota / 1024 / 1024)}MB available, ${Math.round(estimate.usage / 1024)}KB used`;
+                    displayBrowserInfo(info);
+                });
+            } else {
+                info.storageQuota = 'Not available';
+                displayBrowserInfo(info);
+            }
+
+            return info;
+        }
+
+        function displayBrowserInfo(info) {
+            const browserDiv = document.getElementById('browser-info');
+            browserDiv.innerHTML = `
+                <div class="status ${info.isFirefox ? 'success' : 'warning'}">
+                    ${info.isFirefox ? '✅ Firefox Detected' : '⚠️ Not Firefox'}
+                </div>
+                <p><strong>Version:</strong> ${info.firefoxVersion}</p>
+                <p><strong>Platform:</strong> ${info.isMobile ? '📱 Mobile' : '🖥️ Desktop'} (${info.platform})</p>
+                <p><strong>Cookies:</strong> ${info.cookieEnabled ? '✅ Enabled' : '❌ Disabled'}</p>
+                <p><strong>Storage Quota:</strong> ${info.storageQuota}</p>
+                <p><strong>User Agent:</strong> <small>${info.userAgent}</small></p>
+            `;
+        }
+
+        function runBasicTest() {
+            log('=== BASIC LOCALSTORAGE TEST ===');
+            
+            try {
+                // Test basic storage
+                const testKey = 'firefox-persistence-test';
+                const testValue = `Test data ${Date.now()}`;
+                
+                localStorage.setItem(testKey, testValue);
+                const retrieved = localStorage.getItem(testKey);
+                
+                if (retrieved === testValue) {
+                    log('✅ Basic localStorage write/read works', 'success');
+                } else {
+                    log(`❌ Basic localStorage failed: wrote "${testValue}", got "${retrieved}"`, 'error');
+                }
+
+                // Test JSON data
+                const jsonData = { test: true, timestamp: Date.now(), array: [1, 2, 3] };
+                localStorage.setItem(testKey + '_json', JSON.stringify(jsonData));
+                const retrievedJson = JSON.parse(localStorage.getItem(testKey + '_json'));
+                
+                if (JSON.stringify(retrievedJson) === JSON.stringify(jsonData)) {
+                    log('✅ JSON localStorage write/read works', 'success');
+                } else {
+                    log('❌ JSON localStorage failed', 'error');
+                }
+
+                // Clean up
+                localStorage.removeItem(testKey);
+                localStorage.removeItem(testKey + '_json');
+
+            } catch (error) {
+                log(`❌ Basic test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function runKanbanDataTest() {
+            log('=== KANBAN DATA SIMULATION TEST ===');
+            
+            try {
+                // Simulate kanban board data structure
+                const boardData = {
+                    id: 'test-board',
+                    title: 'Test Board',
+                    columns: [
+                        {
+                            id: 'todo',
+                            title: 'To Do',
+                            cards: [
+                                { id: 'card-1', title: 'Test Card 1', description: 'Test description', createdAt: Date.now() },
+                                { id: 'card-2', title: 'Test Card 2', description: 'Another test', createdAt: Date.now() }
+                            ]
+                        },
+                        {
+                            id: 'done',
+                            title: 'Done',
+                            cards: [
+                                { id: 'card-3', title: 'Completed Card', description: 'Done!', createdAt: Date.now() }
+                            ]
+                        }
+                    ]
+                };
+
+                const key = 'kanban-boards';
+                const boards = [boardData];
+                
+                // Test large data storage
+                localStorage.setItem(key, JSON.stringify(boards));
+                log(`📤 Stored kanban data (${JSON.stringify(boards).length} chars)`);
+                
+                const retrieved = JSON.parse(localStorage.getItem(key));
+                
+                if (retrieved && retrieved.length === 1 && retrieved[0].id === 'test-board') {
+                    log('✅ Kanban data storage/retrieval works', 'success');
+                    log(`📊 Data integrity: ${retrieved[0].columns.length} columns, ${retrieved[0].columns.reduce((sum, col) => sum + col.cards.length, 0)} total cards`);
+                } else {
+                    log('❌ Kanban data storage failed', 'error');
+                }
+
+                // Test incremental updates (like what happens during drag)
+                const updatedBoards = [...boards];
+                updatedBoards[0].columns[0].cards.push({
+                    id: 'card-4',
+                    title: 'New Card',
+                    description: 'Added during test',
+                    createdAt: Date.now()
+                });
+
+                localStorage.setItem(key, JSON.stringify(updatedBoards));
+                const afterUpdate = JSON.parse(localStorage.getItem(key));
+                
+                if (afterUpdate[0].columns[0].cards.length === 3) {
+                    log('✅ Incremental updates work', 'success');
+                } else {
+                    log('❌ Incremental updates failed', 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Kanban simulation failed: ${error.message}`, 'error');
+            }
+        }
+
+        function runTimingTest() {
+            log('=== TIMING & DEBOUNCE TEST ===');
+            
+            let saveCount = 0;
+            const testKey = 'timing-test';
+            
+            // Simulate rapid saves (like during drag)
+            function rapidSave(iteration) {
+                try {
+                    const data = { iteration, timestamp: Date.now(), saveCount: ++saveCount };
+                    localStorage.setItem(testKey, JSON.stringify(data));
+                    log(`💾 Save ${iteration}: ${JSON.stringify(data)}`);
+                } catch (error) {
+                    log(`❌ Save ${iteration} failed: ${error.message}`, 'error');
+                }
+            }
+
+            // Simulate debounced saves
+            let debounceTimeout;
+            function debouncedSave(iteration) {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(() => rapidSave(iteration), 100);
+            }
+
+            log('Starting rapid save simulation...');
+            
+            // Rapid immediate saves
+            for (let i = 1; i <= 5; i++) {
+                rapidSave(i);
+            }
+
+            // Debounced saves
+            log('Starting debounced save simulation...');
+            for (let i = 6; i <= 10; i++) {
+                debouncedSave(i);
+            }
+
+            // Check final result after debounce
+            setTimeout(() => {
+                try {
+                    const final = JSON.parse(localStorage.getItem(testKey));
+                    log(`✅ Final stored data: ${JSON.stringify(final)}`, 'success');
+                    
+                    if (final.iteration === 10) {
+                        log('✅ Debouncing worked correctly', 'success');
+                    } else {
+                        log('⚠️ Debouncing may have issues', 'warning');
+                    }
+                } catch (error) {
+                    log(`❌ Final check failed: ${error.message}`, 'error');
+                }
+            }, 200);
+        }
+
+        function runStorageEventsTest() {
+            log('=== STORAGE EVENTS TEST ===');
+            
+            // Test storage events (important for cross-tab sync)
+            window.addEventListener('storage', (e) => {
+                log(`📡 Storage event: key="${e.key}", newValue="${e.newValue?.substring(0, 50)}..."`);
+            });
+
+            // Test beforeunload behavior
+            const originalHandler = window.onbeforeunload;
+            window.onbeforeunload = function(e) {
+                log('🚪 beforeunload event triggered - this is when data should be force-saved');
+                localStorage.setItem('before-unload-test', JSON.stringify({ 
+                    timestamp: Date.now(), 
+                    message: 'Saved during beforeunload' 
+                }));
+                if (originalHandler) originalHandler(e);
+            };
+
+            // Test visibility change (important for mobile)
+            document.addEventListener('visibilitychange', () => {
+                log(`👁️ Visibility changed: ${document.visibilityState}`);
+                if (document.visibilityState === 'hidden') {
+                    localStorage.setItem('visibility-test', JSON.stringify({ 
+                        timestamp: Date.now(), 
+                        message: 'Saved during visibility change' 
+                    }));
+                }
+            });
+
+            log('✅ Event listeners attached - try switching tabs or closing page');
+        }
+
+        function clearAllStorage() {
+            const keys = Object.keys(localStorage);
+            keys.forEach(key => {
+                if (key.startsWith('test') || key.includes('kanban') || key.includes('timing') || key.includes('firefox')) {
+                    localStorage.removeItem(key);
+                }
+            });
+            log('🗑️ Cleared all test data from localStorage');
+            testResults = [];
+            document.getElementById('results').textContent = '';
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            log('🚀 Firefox Persistence Test initialized');
+            detectBrowser();
+            
+            // Check for data from previous session
+            const beforeUnloadData = localStorage.getItem('before-unload-test');
+            if (beforeUnloadData) {
+                log(`📤 Found data from previous beforeunload: ${beforeUnloadData}`, 'success');
+            }
+            
+            const visibilityData = localStorage.getItem('visibility-test');
+            if (visibilityData) {
+                log(`👁️ Found data from previous visibility change: ${visibilityData}`, 'success');
+            }
+        };
+    </script>
+</body>
+</html>
