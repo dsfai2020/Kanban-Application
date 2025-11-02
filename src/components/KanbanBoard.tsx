@@ -224,6 +224,12 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
         console.log('Should track card completion for:', activeCard.id)
         try {
           achievementManager.trackCardMovedToDone(activeCard.id)
+          
+          // Also track in day status if available
+          if (typeof window !== 'undefined' && (window as any).dayStatusTrackCard) {
+            (window as any).dayStatusTrackCard(activeCard.id, activeCard.title)
+            console.log('Card completion tracked in day status')
+          }
         } catch (error) {
           console.warn('Achievement tracking failed:', error)
         }
