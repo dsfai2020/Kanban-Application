@@ -105,12 +105,12 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 4, // Balanced activation distance
+        distance: 4, // Balanced activation distance for mouse
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 500, // Half-second press-and-hold delay for mobile to prevent scroll conflicts
+        delay: 1000, // 1-second press-and-hold delay for all touch devices
         tolerance: 5, // Movement tolerance during press-and-hold
       },
     })
