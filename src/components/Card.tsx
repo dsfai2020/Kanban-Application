@@ -28,6 +28,7 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 })
   const menuButtonRef = useRef<HTMLButtonElement>(null)
+  const [isDragHandleActive, setIsDragHandleActive] = useState(false)
 
   const {
     attributes,
@@ -44,6 +45,38 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
       card
     }
   })
+
+  // Prevent scrolling when drag handle is being pressed
+  useEffect(() => {
+    if (isDragHandleActive || isDragging || isSortableDragging) {
+      // Prevent body scrolling
+      document.body.style.overflow = 'hidden'
+      document.body.style.position = 'fixed'
+      document.body.style.width = '100%'
+    } else {
+      // Restore scrolling
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+    }
+
+    return () => {
+      // Cleanup on unmount
+      document.body.style.overflow = ''
+      document.body.style.position = ''
+      document.body.style.width = ''
+    }
+  }, [isDragHandleActive, isDragging, isSortableDragging])
+
+  const handleDragHandleTouchStart = (e: React.TouchEvent) => {
+    setIsDragHandleActive(true)
+    // Prevent page scrolling while holding the drag handle
+    e.preventDefault()
+  }
+
+  const handleDragHandleTouchEnd = () => {
+    setIsDragHandleActive(false)
+  }
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -131,6 +164,9 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
               className="card-drag-handle"
               title="Hold for 1 second to drag"
               aria-label="Drag handle"
+              onTouchStart={handleDragHandleTouchStart}
+              onTouchEnd={handleDragHandleTouchEnd}
+              onTouchCancel={handleDragHandleTouchEnd}
             >
               <GripVertical size={16} />
             </button>

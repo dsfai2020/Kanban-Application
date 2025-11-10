@@ -122,6 +122,10 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
     if (card) {
       setActiveCard(card)
     }
+    // Prevent page scrolling during drag
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.width = '100%'
   }
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -268,6 +272,19 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
       // For cross-column moves, just update the parent with current state immediately
       forceImmediateSave(columns)
     }
+    
+    // Restore page scrolling after drag ends
+    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.width = ''
+  }
+
+  const handleDragCancel = () => {
+    setActiveCard(null)
+    // Restore page scrolling if drag is cancelled
+    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.width = ''
   }
 
   const findCard = (cardId: string): CardType | undefined => {
@@ -340,6 +357,7 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
         autoScroll={{
           threshold: {
             x: 0.2,
