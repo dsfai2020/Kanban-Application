@@ -9,7 +9,8 @@ import {
   Calendar, 
   User, 
   Tag, 
-  Check
+  Check,
+  GripVertical
 } from 'lucide-react'
 import { memo } from 'react'
 import CardModal from './CardModal'
@@ -34,7 +35,8 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
     setNodeRef,
     transform,
     transition,
-    isDragging: isSortableDragging
+    isDragging: isSortableDragging,
+    setActivatorNodeRef
   } = useSortable({
     id: card.id,
     data: {
@@ -120,10 +122,18 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
         style={style}
         className={`card ${isDragging ? 'dragging' : ''}`}
         {...attributes}
-        {...listeners}
       >
         <div className="card-content">
           <div className="card-header">
+            <button
+              ref={setActivatorNodeRef}
+              {...listeners}
+              className="card-drag-handle"
+              title="Hold for 1 second to drag"
+              aria-label="Drag handle"
+            >
+              <GripVertical size={16} />
+            </button>
             <h4 className="card-title">{card.title}</h4>
             {onUpdate && onDelete ? (
               <div className="card-actions">
