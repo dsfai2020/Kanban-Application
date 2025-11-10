@@ -111,7 +111,7 @@ export default function KanbanBoard({ board, onUpdateBoard, settings }: KanbanBo
     useSensor(TouchSensor, {
       activationConstraint: {
         delay: 1000, // 1-second press-and-hold delay for all touch devices
-        tolerance: 5, // Movement tolerance during press-and-hold
+        tolerance: 10, // Allow 10px movement during press-and-hold to accommodate natural finger drift
       },
     })
   )

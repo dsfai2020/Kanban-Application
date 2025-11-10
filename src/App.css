@@ -1232,7 +1232,7 @@ body {
   transition: var(--transition);
   position: relative;
   min-height: 80px;
-  touch-action: none;
+  touch-action: pan-y; /* Allow vertical scrolling, prevent horizontal */
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
