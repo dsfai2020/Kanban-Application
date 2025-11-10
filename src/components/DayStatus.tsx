@@ -296,15 +296,6 @@ const DayStatus: React.FC = () => {
     console.log(`Session ${sessionId} removed`)
   }
 
-  const removeHistoryDay = (dateToRemove: string) => {
-    const updatedHistory = dayStatus.history.filter(record => record.date !== dateToRemove)
-    setDayStatus({
-      ...dayStatus,
-      history: updatedHistory
-    })
-    console.log(`History day ${dateToRemove} removed`)
-  }
-
   // Card completion tracking (to be called from outside when cards are completed)
   const trackCardCompletion = (cardId: string, cardTitle: string) => {
     if (dayStatus.currentClockEntry) {
