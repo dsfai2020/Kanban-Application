@@ -6,10 +6,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5174,
-    host: true,
+    host: '0.0.0.0',
     open: false,
     strictPort: false,
-    cors: true
+    cors: true,
+    hmr: {
+      overlay: false,
+    }
   },
   build: {
     target: 'es2020',
