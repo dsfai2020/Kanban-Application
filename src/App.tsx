@@ -40,7 +40,7 @@ function KanbanApp() {
   
   // Schedule state
   const [scheduleEvents, setScheduleEvents] = useLocalStorage<ScheduleEvent[]>('kanban-schedule-events', [])
-  const [scheduleViewMode, setScheduleViewMode] = useState<ScheduleViewMode>('week')
+  const [scheduleViewMode, setScheduleViewMode] = useLocalStorage<ScheduleViewMode>('kanban-schedule-view-mode', 'week')
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [isScheduleCollapsed, setIsScheduleCollapsed] = useState(false)
   const [draggedItem, setDraggedItem] = useState<{ type: 'card' | 'event', data: Card | ScheduleEvent } | null>(null)

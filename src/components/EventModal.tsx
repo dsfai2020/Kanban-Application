@@ -55,9 +55,17 @@ export default function EventModal({
         const start = new Date(event.startTime)
         const end = new Date(event.endTime)
         
-        setStartDate(start.toISOString().split('T')[0])
+        // Format dates properly for date inputs (YYYY-MM-DD)
+        const formatDateForInput = (date: Date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
+        
+        setStartDate(formatDateForInput(start))
         setStartTime(start.toTimeString().slice(0, 5))
-        setEndDate(end.toISOString().split('T')[0])
+        setEndDate(formatDateForInput(end))
         setEndTime(end.toTimeString().slice(0, 5))
         setAllDay(event.allDay)
         setColor(event.color || PRESET_COLORS[0])
@@ -65,15 +73,25 @@ export default function EventModal({
         setPriority(event.priority || 'medium')
         setTags(event.tags?.join(', ') || '')
       } else {
-        // Create mode
-        const now = defaultDate || new Date()
-        const hour = defaultHour !== undefined ? defaultHour : now.getHours()
+        // Create mode - use today's date
+        const now = defaultDate ? new Date(defaultDate) : new Date()
+        now.setHours(0, 0, 0, 0) // Reset to start of day
+        
+        const hour = defaultHour !== undefined ? defaultHour : new Date().getHours()
+        
+        // Format today's date for input (YYYY-MM-DD)
+        const formatDateForInput = (date: Date) => {
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          return `${year}-${month}-${day}`
+        }
         
         setTitle('')
         setDescription('')
-        setStartDate(now.toISOString().split('T')[0])
+        setStartDate(formatDateForInput(now))
         setStartTime(`${hour.toString().padStart(2, '0')}:00`)
-        setEndDate(now.toISOString().split('T')[0])
+        setEndDate(formatDateForInput(now))
         setEndTime(`${(hour + 1).toString().padStart(2, '0')}:00`)
         setAllDay(false)
         setColor(PRESET_COLORS[0])

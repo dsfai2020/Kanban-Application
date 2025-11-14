@@ -95,6 +95,10 @@ export default function ScheduleEventCard({ event, onClick, onToggleComplete }: 
       <div 
         ref={setActivatorNodeRef}
         className="event-drag-handle"
+        onTouchStart={(e) => {
+          // Prevent Safari magnifying glass and text selection
+          e.preventDefault()
+        }}
         {...listeners}
       >
         <GripVertical size={14} />
