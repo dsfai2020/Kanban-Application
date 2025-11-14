@@ -6,9 +6,10 @@ import './ScheduleEventCard.css'
 interface ScheduleEventCardProps {
   event: ScheduleEvent
   onClick: () => void
+  onToggleComplete?: (event: ScheduleEvent) => void
 }
 
-export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardProps) {
+export default function ScheduleEventCard({ event, onClick, onToggleComplete }: ScheduleEventCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging, setActivatorNodeRef } = useDraggable({
     id: event.id,
     data: { type: 'schedule-event', event }
@@ -18,6 +19,16 @@ export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardP
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
   } : {}
+
+  const handleToggleComplete = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onToggleComplete) {
+      const newStatus = event.status === 'completed' ? 'scheduled' : 'completed'
+      onToggleComplete({ ...event, status: newStatus, updatedAt: new Date() })
+    }
+  }
+
+  const isCompleted = event.status === 'completed'
 
   const getStatusIcon = () => {
     switch (event.status) {
@@ -93,7 +104,7 @@ export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardP
         <div className="event-header">
           <div className="event-title-row">
             {getStatusIcon()}
-            <h4 className="event-title">{event.title}</h4>
+            <h4 className={`event-title ${isCompleted ? 'completed' : ''}`}>{event.title}</h4>
           </div>
           {!event.allDay && (
             <div className="event-time">
@@ -115,6 +126,21 @@ export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardP
           </div>
         )}
       </div>
+
+      {/* Complete Checkbox */}
+      {onToggleComplete && (
+        <div className="event-actions">
+          <button
+            className={`event-complete-btn ${isCompleted ? 'completed' : ''}`}
+            onClick={handleToggleComplete}
+            title={isCompleted ? 'Mark as incomplete' : 'Mark as complete'}
+          >
+            <div className="checkbox">
+              {isCompleted && <CheckCircle size={14} />}
+            </div>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

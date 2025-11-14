@@ -268,6 +268,7 @@ export default function Schedule({
             getEventsForSlot={getEventsForSlot}
             onSlotClick={handleSlotClick}
             onEventClick={handleEventClick}
+            onToggleComplete={onEventUpdate}
             dayHeader={formatDayHeader(day)}
           />
         ))}
@@ -311,6 +312,7 @@ interface ScheduleDayColumnProps {
   getEventsForSlot: (day: Date, hour: number) => ScheduleEvent[]
   onSlotClick: (day: Date, hour: number) => void
   onEventClick: (event: ScheduleEvent) => void
+  onToggleComplete: (event: ScheduleEvent) => void
   dayHeader: string
 }
 
@@ -322,6 +324,7 @@ function ScheduleDayColumn({
   getEventsForSlot,
   onSlotClick,
   onEventClick,
+  onToggleComplete,
   dayHeader
 }: ScheduleDayColumnProps) {
   return (
@@ -341,6 +344,7 @@ function ScheduleDayColumn({
             isCurrentHour={isCurrentHour}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
+            onToggleComplete={onToggleComplete}
           />
         )
       })}
@@ -355,6 +359,7 @@ interface ScheduleTimeSlotProps {
   isCurrentHour: boolean
   onSlotClick: (day: Date, hour: number) => void
   onEventClick: (event: ScheduleEvent) => void
+  onToggleComplete: (event: ScheduleEvent) => void
 }
 
 function ScheduleTimeSlot({
@@ -363,7 +368,8 @@ function ScheduleTimeSlot({
   events,
   isCurrentHour,
   onSlotClick,
-  onEventClick
+  onEventClick,
+  onToggleComplete
 }: ScheduleTimeSlotProps) {
   const slotId = `${day.toDateString()}-${hour}`
   const { setNodeRef, isOver } = useDroppable({
@@ -382,6 +388,7 @@ function ScheduleTimeSlot({
           key={event.id}
           event={event}
           onClick={() => onEventClick(event)}
+          onToggleComplete={onToggleComplete}
         />
       ))}
     </div>

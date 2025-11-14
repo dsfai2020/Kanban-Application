@@ -54,6 +54,72 @@
   min-width: 0;
 }
 
+/* Event Title */
+.event-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: var(--transition);
+}
+
+.event-title.completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+/* Event Actions */
+.event-actions {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.event-complete-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.event-complete-btn .checkbox {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-hover);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  background: var(--bg-secondary);
+}
+
+.event-complete-btn:hover .checkbox {
+  border-color: var(--success);
+  background: var(--bg-hover);
+}
+
+.event-complete-btn.completed .checkbox {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.event-complete-btn.completed:hover .checkbox {
+  background: var(--success-hover);
+  border-color: var(--success-hover);
+}
+
 /* Event Header */
 .event-header {
   display: flex;
@@ -65,17 +131,6 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.event-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .event-time {
