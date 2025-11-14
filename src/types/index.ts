@@ -103,3 +103,6 @@ export interface SignUpCredentials extends SignInCredentials {
 
 // Re-export achievement types
 export * from './achievements'
+
+// Re-export schedule types
+export * from './schedule'

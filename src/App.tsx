@@ -1,15 +1,16 @@
 import { useEffect, useState, useRef } from 'react'
-import { DndContext, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { v4 as uuidv4 } from 'uuid'
 import { AuthProvider } from './contexts/AuthContext'
 import { useAuth } from './contexts/AuthContext'
 import Sidebar from './components/Sidebar'
 import KanbanBoard from './components/KanbanBoard'
+import Schedule from './components/Schedule'
 import SettingsModal from './components/SettingsModal'
 import SignInModal from './components/SignInModal'
 import ProfileModal from './components/ProfileModal'
 import DayStatus from './components/DayStatus'
-import type { Board, AppState, AppSettings } from './types'
+import type { Board, AppState, AppSettings, Card, ScheduleEvent, ScheduleViewMode } from './types'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { achievementManager } from './utils/achievementManager'
 import AchievementNotificationsContainer, { useAchievementNotifications } from './components/AchievementNotificationsContainer'
@@ -36,6 +37,13 @@ function KanbanApp() {
   const [isSignInOpen, setIsSignInOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const lastThemeRef = useRef<string | null>(null)
+  
+  // Schedule state
+  const [scheduleEvents, setScheduleEvents] = useLocalStorage<ScheduleEvent[]>('kanban-schedule-events', [])
+  const [scheduleViewMode, setScheduleViewMode] = useState<ScheduleViewMode>('week')
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [showSchedule, setShowSchedule] = useState(false)
+  const [draggedItem, setDraggedItem] = useState<{ type: 'card' | 'event', data: Card | ScheduleEvent } | null>(null)
   
   // Achievement notifications
   const { notifications, showNotification, removeNotification } = useAchievementNotifications()
@@ -307,14 +315,100 @@ function KanbanApp() {
     }))
   }
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event
+    // Determine what's being dragged
+    if (active.data.current?.type === 'card') {
+      setDraggedItem({ type: 'card', data: active.data.current.card as Card })
+    } else if (active.data.current?.type === 'schedule-event') {
+      setDraggedItem({ type: 'event', data: active.data.current.event as ScheduleEvent })
+    }
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
-    // Handle drag and drop logic here
-    console.log('Drag ended:', event)
+    const { active, over } = event
+    setDraggedItem(null)
+
+    if (!over) return
+
+    // Handle card dropped on schedule slot
+    if (over.data.current?.type === 'schedule-slot' && active.data.current?.type === 'card') {
+      const card = active.data.current.card as Card
+      const { day, hour } = over.data.current
+      handleCardDroppedOnSchedule(card, day, hour)
+    }
+    
+    // Handle event dropped on schedule slot (rescheduling)
+    if (over.data.current?.type === 'schedule-slot' && active.data.current?.type === 'schedule-event') {
+      const event = active.data.current.event as ScheduleEvent
+      const { day, hour } = over.data.current
+      handleEventRescheduled(event, day, hour)
+    }
+  }
+
+  const handleCardDroppedOnSchedule = (card: Card, date: Date, hour: number) => {
+    const startTime = new Date(date)
+    startTime.setHours(hour, 0, 0, 0)
+    
+    const endTime = new Date(startTime)
+    endTime.setHours(hour + 1, 0, 0, 0)
+
+    const newEvent: ScheduleEvent = {
+      id: uuidv4(),
+      title: card.title,
+      description: card.description,
+      startTime,
+      endTime,
+      allDay: false,
+      color: card.priority === 'urgent' ? '#dc2626' : 
+             card.priority === 'high' ? '#f59e0b' :
+             card.priority === 'medium' ? '#3b82f6' : '#6b7280',
+      status: 'scheduled',
+      cardId: card.id,
+      tags: card.tags,
+      priority: card.priority,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    setScheduleEvents(prev => [...prev, newEvent])
+  }
+
+  const handleEventRescheduled = (event: ScheduleEvent, date: Date, hour: number) => {
+    const startTime = new Date(date)
+    startTime.setHours(hour, 0, 0, 0)
+    
+    const duration = new Date(event.endTime).getTime() - new Date(event.startTime).getTime()
+    const endTime = new Date(startTime.getTime() + duration)
+
+    setScheduleEvents(prev => 
+      prev.map(e => e.id === event.id ? { ...e, startTime, endTime, updatedAt: new Date() } : e)
+    )
+  }
+
+  const handleEventCreate = (eventData: Omit<ScheduleEvent, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newEvent: ScheduleEvent = {
+      ...eventData,
+      id: uuidv4(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+    setScheduleEvents(prev => [...prev, newEvent])
+  }
+
+  const handleEventUpdate = (event: ScheduleEvent) => {
+    setScheduleEvents(prev => 
+      prev.map(e => e.id === event.id ? event : e)
+    )
+  }
+
+  const handleEventDelete = (eventId: string) => {
+    setScheduleEvents(prev => prev.filter(e => e.id !== eventId))
   }
 
   return (
     <div className="app">
-      <DndContext onDragEnd={handleDragEnd}>
+      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <Sidebar
           boards={appState.boards}
           activeBoard={appState.activeBoard}
@@ -346,7 +440,34 @@ function KanbanApp() {
               {/* Day Status - appears at top when authenticated */}
               <DayStatus />
               
-              {activeBoard ? (
+              {/* View Toggle */}
+              <div className="view-toggle">
+                <button
+                  className={`btn ${!showSchedule ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                  onClick={() => setShowSchedule(false)}
+                >
+                  Board View
+                </button>
+                <button
+                  className={`btn ${showSchedule ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                  onClick={() => setShowSchedule(true)}
+                >
+                  Schedule View
+                </button>
+              </div>
+
+              {showSchedule ? (
+                <Schedule
+                  events={scheduleEvents}
+                  viewMode={scheduleViewMode}
+                  selectedDate={selectedDate}
+                  onViewModeChange={setScheduleViewMode}
+                  onDateChange={setSelectedDate}
+                  onEventCreate={handleEventCreate}
+                  onEventUpdate={handleEventUpdate}
+                  onEventDelete={handleEventDelete}
+                />
+              ) : activeBoard ? (
                 <KanbanBoard 
                   board={activeBoard} 
                   onUpdateBoard={handleUpdateBoard}

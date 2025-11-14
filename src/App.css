@@ -956,6 +956,15 @@ body {
   min-height: 100vh;
 }
 
+/* View Toggle */
+.view-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem 0.5rem;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1635,6 +1644,16 @@ body {
   background: var(--bg-hover);
   color: var(--text-primary);
   border-color: var(--border-hover);
+}
+
+.btn-accent {
+  background: var(--success);
+  color: white;
+}
+
+.btn-accent:hover {
+  background: var(--success-hover);
+  transform: translateY(-1px);
 }
 
 /* Scrollbar Styles */

@@ -41,7 +41,7 @@ function Card({ card, onUpdate, onDelete, isDragging = false }: CardProps) {
   } = useSortable({
     id: card.id,
     data: {
-      type: 'Card',
+      type: 'card',
       card
     }
   })
