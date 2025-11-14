@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { ChevronLeft, ChevronRight, Calendar, Plus } from 'lucide-react'
 import type { ScheduleEvent, ScheduleViewMode } from '../types/schedule'
@@ -32,6 +32,18 @@ export default function Schedule({
   const [isEventModalOpen, setIsEventModalOpen] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; hour: number } | null>(null)
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null)
+  const [currentTime, setCurrentTime] = useState(new Date())
+
+  // Update current time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date())
+    }, 60000) // Update every minute
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const currentHour = currentTime.getHours()
 
   // Calculate the days to display based on view mode
   const displayDays = useMemo(() => {
@@ -237,7 +249,10 @@ export default function Schedule({
         <div className="schedule-time-column">
           <div className="schedule-day-header"></div>
           {HOURS.map(hour => (
-            <div key={hour} className="schedule-time-label">
+            <div 
+              key={hour} 
+              className={`schedule-time-label ${hour === currentHour ? 'current-hour' : ''}`}
+            >
               {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
             </div>
           ))}
@@ -248,6 +263,7 @@ export default function Schedule({
             key={day.toDateString()}
             day={day}
             isToday={isToday(day)}
+            currentHour={currentHour}
             hours={HOURS}
             getEventsForSlot={getEventsForSlot}
             onSlotClick={handleSlotClick}
@@ -290,6 +306,7 @@ export default function Schedule({
 interface ScheduleDayColumnProps {
   day: Date
   isToday: boolean
+  currentHour: number
   hours: number[]
   getEventsForSlot: (day: Date, hour: number) => ScheduleEvent[]
   onSlotClick: (day: Date, hour: number) => void
@@ -300,6 +317,7 @@ interface ScheduleDayColumnProps {
 function ScheduleDayColumn({
   day,
   isToday,
+  currentHour,
   hours,
   getEventsForSlot,
   onSlotClick,
@@ -313,12 +331,14 @@ function ScheduleDayColumn({
       </div>
       {hours.map(hour => {
         const slotEvents = getEventsForSlot(day, hour)
+        const isCurrentHour = isToday && hour === currentHour
         return (
           <ScheduleTimeSlot
             key={hour}
             day={day}
             hour={hour}
             events={slotEvents}
+            isCurrentHour={isCurrentHour}
             onSlotClick={onSlotClick}
             onEventClick={onEventClick}
           />
@@ -332,6 +352,7 @@ interface ScheduleTimeSlotProps {
   day: Date
   hour: number
   events: ScheduleEvent[]
+  isCurrentHour: boolean
   onSlotClick: (day: Date, hour: number) => void
   onEventClick: (event: ScheduleEvent) => void
 }
@@ -340,6 +361,7 @@ function ScheduleTimeSlot({
   day,
   hour,
   events,
+  isCurrentHour,
   onSlotClick,
   onEventClick
 }: ScheduleTimeSlotProps) {
@@ -352,7 +374,7 @@ function ScheduleTimeSlot({
   return (
     <div
       ref={setNodeRef}
-      className={`schedule-time-slot ${isOver ? 'slot-over' : ''}`}
+      className={`schedule-time-slot ${isOver ? 'slot-over' : ''} ${isCurrentHour ? 'current-hour-slot' : ''}`}
       onClick={() => events.length === 0 && onSlotClick(day, hour)}
     >
       {events.map(event => (
