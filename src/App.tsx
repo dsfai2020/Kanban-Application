@@ -42,7 +42,7 @@ function KanbanApp() {
   const [scheduleEvents, setScheduleEvents] = useLocalStorage<ScheduleEvent[]>('kanban-schedule-events', [])
   const [scheduleViewMode, setScheduleViewMode] = useState<ScheduleViewMode>('week')
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const [showSchedule, setShowSchedule] = useState(false)
+  const [isScheduleCollapsed, setIsScheduleCollapsed] = useState(false)
   const [draggedItem, setDraggedItem] = useState<{ type: 'card' | 'event', data: Card | ScheduleEvent } | null>(null)
   
   // Achievement notifications
@@ -347,6 +347,15 @@ function KanbanApp() {
   }
 
   const handleCardDroppedOnSchedule = (card: Card, date: Date, hour: number) => {
+    // Check if this card already has an event scheduled
+    const existingEvent = scheduleEvents.find(e => e.cardId === card.id)
+    
+    if (existingEvent) {
+      // If event exists, just reschedule it instead of creating a duplicate
+      handleEventRescheduled(existingEvent, date, hour)
+      return
+    }
+
     const startTime = new Date(date)
     startTime.setHours(hour, 0, 0, 0)
     
@@ -440,34 +449,8 @@ function KanbanApp() {
               {/* Day Status - appears at top when authenticated */}
               <DayStatus />
               
-              {/* View Toggle */}
-              <div className="view-toggle">
-                <button
-                  className={`btn ${!showSchedule ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-                  onClick={() => setShowSchedule(false)}
-                >
-                  Board View
-                </button>
-                <button
-                  className={`btn ${showSchedule ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-                  onClick={() => setShowSchedule(true)}
-                >
-                  Schedule View
-                </button>
-              </div>
-
-              {showSchedule ? (
-                <Schedule
-                  events={scheduleEvents}
-                  viewMode={scheduleViewMode}
-                  selectedDate={selectedDate}
-                  onViewModeChange={setScheduleViewMode}
-                  onDateChange={setSelectedDate}
-                  onEventCreate={handleEventCreate}
-                  onEventUpdate={handleEventUpdate}
-                  onEventDelete={handleEventDelete}
-                />
-              ) : activeBoard ? (
+              {/* Kanban Board - Always visible */}
+              {activeBoard ? (
                 <KanbanBoard 
                   board={activeBoard} 
                   onUpdateBoard={handleUpdateBoard}
@@ -479,6 +462,29 @@ function KanbanApp() {
                   <p>Create a new board or select an existing one from the sidebar.</p>
                 </div>
               )}
+
+              {/* Schedule Section - Collapsible */}
+              <div className={`schedule-section ${isScheduleCollapsed ? 'collapsed' : ''}`}>
+                <button 
+                  className="schedule-toggle-btn"
+                  onClick={() => setIsScheduleCollapsed(!isScheduleCollapsed)}
+                >
+                  <span>{isScheduleCollapsed ? '▶' : '▼'}</span>
+                  <span>Schedule</span>
+                </button>
+                {!isScheduleCollapsed && (
+                  <Schedule
+                    events={scheduleEvents}
+                    viewMode={scheduleViewMode}
+                    selectedDate={selectedDate}
+                    onViewModeChange={setScheduleViewMode}
+                    onDateChange={setSelectedDate}
+                    onEventCreate={handleEventCreate}
+                    onEventUpdate={handleEventUpdate}
+                    onEventDelete={handleEventDelete}
+                  />
+                )}
+              </div>
             </>
           )}
         </main>

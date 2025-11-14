@@ -1,5 +1,5 @@
 import { useDraggable } from '@dnd-kit/core'
-import { Clock, CheckCircle, Circle, XCircle, Pause } from 'lucide-react'
+import { Clock, CheckCircle, Circle, XCircle, Pause, GripVertical } from 'lucide-react'
 import type { ScheduleEvent } from '../types/schedule'
 import './ScheduleEventCard.css'
 
@@ -9,7 +9,7 @@ interface ScheduleEventCardProps {
 }
 
 export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform, isDragging, setActivatorNodeRef } = useDraggable({
     id: event.id,
     data: { type: 'schedule-event', event }
   })
@@ -17,10 +17,7 @@ export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardP
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab'
-  } : {
-    cursor: 'grab'
-  }
+  } : {}
 
   const getStatusIcon = () => {
     switch (event.status) {
@@ -77,35 +74,47 @@ export default function ScheduleEventCard({ event, onClick }: ScheduleEventCardP
       className={`schedule-event-card ${event.allDay ? 'all-day' : ''} ${getPriorityClass()} status-${event.status}`}
       onClick={(e) => {
         e.stopPropagation()
-        onClick()
+        if (!isDragging) {
+          onClick()
+        }
       }}
-      {...listeners}
       {...attributes}
     >
-      <div className="event-header">
-        <div className="event-title-row">
-          {getStatusIcon()}
-          <h4 className="event-title">{event.title}</h4>
+      {/* Drag Handle */}
+      <div 
+        ref={setActivatorNodeRef}
+        className="event-drag-handle"
+        {...listeners}
+      >
+        <GripVertical size={14} />
+      </div>
+
+      <div className="event-content">
+        <div className="event-header">
+          <div className="event-title-row">
+            {getStatusIcon()}
+            <h4 className="event-title">{event.title}</h4>
+          </div>
+          {!event.allDay && (
+            <div className="event-time">
+              <Clock size={12} />
+              <span>{getEventDuration()}</span>
+            </div>
+          )}
         </div>
-        {!event.allDay && (
-          <div className="event-time">
-            <Clock size={12} />
-            <span>{getEventDuration()}</span>
+        
+        {event.description && (
+          <p className="event-description">{event.description}</p>
+        )}
+        
+        {event.tags && event.tags.length > 0 && (
+          <div className="event-tags">
+            {event.tags.map((tag, index) => (
+              <span key={index} className="event-tag">{tag}</span>
+            ))}
           </div>
         )}
       </div>
-      
-      {event.description && (
-        <p className="event-description">{event.description}</p>
-      )}
-      
-      {event.tags && event.tags.length > 0 && (
-        <div className="event-tags">
-          {event.tags.map((tag, index) => (
-            <span key={index} className="event-tag">{tag}</span>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
