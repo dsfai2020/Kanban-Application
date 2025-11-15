@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Calendar, Plus, HelpCircle } from 'lucide-re
 import type { ScheduleEvent, ScheduleViewMode } from '../types/schedule'
 import ScheduleEventCard from './ScheduleEventCard'
 import EventModal from './EventModal'
+import { getTimeSlotGradient, getContrastTextColor, getSunTimeLabel } from '../utils/timeGradient'
 import './Schedule.css'
 
 interface ScheduleProps {
@@ -466,12 +467,26 @@ function ScheduleTimeSlot({
     data: { type: 'schedule-slot', day, hour }
   })
 
+  const gradient = getTimeSlotGradient(hour, day)
+  const textColor = getContrastTextColor(hour, day)
+  const sunTimeLabel = getSunTimeLabel(hour, day)
+
   return (
     <div
       ref={setNodeRef}
       className={`schedule-time-slot ${isOver ? 'slot-over' : ''} ${isCurrentHour ? 'current-hour-slot' : ''}`}
       onClick={() => events.length === 0 && onSlotClick(day, hour)}
+      style={{
+        background: gradient,
+        color: textColor
+      }}
     >
+      {sunTimeLabel && (
+        <div className="sun-time-label">
+          <span className="sun-time-type">{sunTimeLabel.label}</span>
+          <span className="sun-time-value">{sunTimeLabel.time}</span>
+        </div>
+      )}
       {events.map(event => (
         <ScheduleEventCard
           key={event.id}

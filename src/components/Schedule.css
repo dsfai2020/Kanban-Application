@@ -199,10 +199,10 @@
 /* Time Slot */
 .schedule-time-slot {
   height: 60px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -213,28 +213,29 @@
 }
 
 .schedule-time-slot:hover {
-  background: var(--bg-hover);
+  transform: scale(1.02);
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1);
 }
 
 .schedule-time-slot.slot-over {
-  background: var(--accent-primary);
-  opacity: 0.2;
+  box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
 .schedule-time-slot.current-hour-slot {
-  background: linear-gradient(90deg, rgba(255, 107, 107, 0.08) 0%, transparent 100%);
-  border-left: 3px solid #ff6b6b;
+  border-left: 3px solid rgba(255, 107, 107, 0.8);
   animation: pulse-current-hour 3s ease-in-out infinite;
+  box-shadow: inset 0 0 15px rgba(255, 107, 107, 0.2);
 }
 
 @keyframes pulse-current-hour {
   0%, 100% {
-    border-left-color: #ff6b6b;
-    box-shadow: inset 0 0 0 0 rgba(255, 107, 107, 0);
+    border-left-color: rgba(255, 107, 107, 0.8);
+    box-shadow: inset 0 0 15px rgba(255, 107, 107, 0.2);
   }
   50% {
-    border-left-color: #ff8787;
-    box-shadow: inset 0 0 8px 0 rgba(255, 107, 107, 0.15);
+    border-left-color: rgba(255, 135, 135, 1);
+    box-shadow: inset 0 0 25px rgba(255, 107, 107, 0.4);
   }
 }
 
@@ -258,6 +259,37 @@
   height: 8px;
   background: var(--danger);
   border-radius: 50%;
+}
+
+/* Sun Time Labels (Dawn/Dusk) */
+.sun-time-label {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+.sun-time-type {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: inherit;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.sun-time-value {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: inherit;
+  opacity: 0.9;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Responsive Design */
