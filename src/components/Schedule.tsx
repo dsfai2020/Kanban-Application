@@ -1,6 +1,6 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
-import { ChevronLeft, ChevronRight, Calendar, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Calendar, Plus, HelpCircle } from 'lucide-react'
 import type { ScheduleEvent, ScheduleViewMode } from '../types/schedule'
 import ScheduleEventCard from './ScheduleEventCard'
 import EventModal from './EventModal'
@@ -33,6 +33,8 @@ export default function Schedule({
   const [selectedSlot, setSelectedSlot] = useState<{ date: Date; hour: number } | null>(null)
   const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const shortcutsRef = useRef<HTMLDivElement>(null)
 
   // Update current time every minute
   useEffect(() => {
@@ -42,6 +44,20 @@ export default function Schedule({
 
     return () => clearInterval(interval)
   }, [])
+
+  // Close shortcuts dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (shortcutsRef.current && !shortcutsRef.current.contains(event.target as Node)) {
+        setShowShortcuts(false)
+      }
+    }
+
+    if (showShortcuts) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showShortcuts])
 
   const currentHour = currentTime.getHours()
 
@@ -162,6 +178,14 @@ export default function Schedule({
     setIsEventModalOpen(true)
   }
 
+  const handleTimeClick = (hour: number) => {
+    // Use the first displayed day for the event
+    const day = displayDays[0] || selectedDate
+    setSelectedSlot({ date: day, hour })
+    setEditingEvent(null)
+    setIsEventModalOpen(true)
+  }
+
   const formatDateRange = () => {
     if (displayDays.length === 0) return ''
     
@@ -242,6 +266,32 @@ export default function Schedule({
             <Plus size={16} />
             New Event
           </button>
+          <div className="shortcuts-dropdown" ref={shortcutsRef}>
+            <button 
+              className="btn btn-secondary btn-sm btn-icon"
+              onClick={() => setShowShortcuts(!showShortcuts)}
+              title="Shortcuts"
+            >
+              <HelpCircle size={16} />
+            </button>
+            {showShortcuts && (
+              <div className="shortcuts-menu">
+                <div className="shortcuts-title">Shortcuts</div>
+                <div className="shortcut-item">
+                  <span className="shortcut-action">Double-tap time label</span>
+                  <span className="shortcut-desc">Create event at that hour</span>
+                </div>
+                <div className="shortcut-item">
+                  <span className="shortcut-action">Click empty slot</span>
+                  <span className="shortcut-desc">Create event</span>
+                </div>
+                <div className="shortcut-item">
+                  <span className="shortcut-action">Drag card to schedule</span>
+                  <span className="shortcut-desc">Schedule card as event</span>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -249,12 +299,12 @@ export default function Schedule({
         <div className="schedule-time-column">
           <div className="schedule-day-header"></div>
           {HOURS.map(hour => (
-            <div 
+            <TimeLabel 
               key={hour} 
-              className={`schedule-time-label ${hour === currentHour ? 'current-hour' : ''}`}
-            >
-              {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
-            </div>
+              hour={hour}
+              isCurrentHour={hour === currentHour}
+              onDoubleTap={() => handleTimeClick(hour)}
+            />
           ))}
         </div>
 
@@ -300,6 +350,45 @@ export default function Schedule({
         defaultDate={selectedSlot?.date}
         defaultHour={selectedSlot?.hour}
       />
+    </div>
+  )
+}
+
+interface TimeLabelProps {
+  hour: number
+  isCurrentHour: boolean
+  onDoubleTap: () => void
+}
+
+function TimeLabel({ hour, isCurrentHour, onDoubleTap }: TimeLabelProps) {
+  const lastTapRef = useRef<number>(0)
+
+  const handleTap = () => {
+    const now = Date.now()
+    const timeSinceLastTap = now - lastTapRef.current
+    
+    if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+      // Double tap detected
+      onDoubleTap()
+      lastTapRef.current = 0
+    } else {
+      lastTapRef.current = now
+    }
+  }
+
+  const formatHour = (h: number) => {
+    return h === 0 ? '12 AM' : h < 12 ? `${h} AM` : h === 12 ? '12 PM' : `${h - 12} PM`
+  }
+
+  return (
+    <div 
+      className={`schedule-time-label ${isCurrentHour ? 'current-hour' : ''}`}
+      onDoubleClick={onDoubleTap}
+      onTouchEnd={handleTap}
+      style={{ cursor: 'pointer' }}
+      title="Double-tap to create event"
+    >
+      {formatHour(hour)}
     </div>
   )
 }

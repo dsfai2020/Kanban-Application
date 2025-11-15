@@ -51,6 +51,61 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Shortcuts Dropdown */
+.shortcuts-dropdown {
+  position: relative;
+}
+
+.shortcuts-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1rem;
+  min-width: 280px;
+  z-index: 100;
+}
+
+.shortcuts-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.shortcut-action {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.shortcut-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
 /* Schedule Grid */
@@ -208,25 +263,37 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .schedule-header {
-    flex-direction: column;
-    align-items: stretch;
+    padding: 0.75rem;
+    gap: 0.75rem;
   }
 
   .schedule-controls {
     min-width: 100%;
+    gap: 0.5rem;
+  }
+
+  .date-navigation {
+    gap: 0.25rem;
   }
 
   .view-mode-controls {
     width: 100%;
-    justify-content: space-between;
   }
 
   .schedule-title {
-    font-size: 1rem;
+    font-size: 0.875rem;
+    min-width: 0;
+    flex: 1;
   }
 
   .schedule-day-column {
     min-width: 120px;
+  }
+
+  .shortcuts-menu {
+    left: 0;
+    right: auto;
+    min-width: 260px;
   }
 }
 
