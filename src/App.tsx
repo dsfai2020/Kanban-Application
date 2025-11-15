@@ -43,7 +43,6 @@ function KanbanApp() {
   const [scheduleViewMode, setScheduleViewMode] = useLocalStorage<ScheduleViewMode>('kanban-schedule-view-mode', 'week')
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [isScheduleCollapsed, setIsScheduleCollapsed] = useState(false)
-  const [draggedItem, setDraggedItem] = useState<{ type: 'card' | 'event', data: Card | ScheduleEvent } | null>(null)
   
   // Achievement notifications
   const { notifications, showNotification, removeNotification } = useAchievementNotifications()
@@ -316,18 +315,15 @@ function KanbanApp() {
   }
 
   const handleDragStart = (event: DragStartEvent) => {
+    // Track what's being dragged for visual feedback
     const { active } = event
-    // Determine what's being dragged
-    if (active.data.current?.type === 'card') {
-      setDraggedItem({ type: 'card', data: active.data.current.card as Card })
-    } else if (active.data.current?.type === 'schedule-event') {
-      setDraggedItem({ type: 'event', data: active.data.current.event as ScheduleEvent })
+    if (active.data.current?.type === 'card' || active.data.current?.type === 'schedule-event') {
+      // Could be used for visual feedback in the future
     }
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    setDraggedItem(null)
 
     if (!over) return
 
