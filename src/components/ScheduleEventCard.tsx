@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core'
 import { Clock, CheckCircle, Circle, XCircle, Pause, GripVertical } from 'lucide-react'
 import type { ScheduleEvent } from '../types/schedule'
+import { soundEffects } from '../utils/soundEffects'
 import './ScheduleEventCard.css'
 
 interface ScheduleEventCardProps {
@@ -24,6 +25,12 @@ export default function ScheduleEventCard({ event, onClick, onToggleComplete }: 
     e.stopPropagation()
     if (onToggleComplete) {
       const newStatus = event.status === 'completed' ? 'scheduled' : 'completed'
+      
+      // Play completion sound when marking as complete
+      if (newStatus === 'completed') {
+        soundEffects.playCompletionSound()
+      }
+      
       onToggleComplete({ ...event, status: newStatus, updatedAt: new Date() })
     }
   }
